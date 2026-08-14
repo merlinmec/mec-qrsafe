@@ -1,0 +1,420 @@
+mec-qrsafe — Decisões de Arquitetura e Trade-offs
+===================================================
+Documento gerado em 2026-08-14, na fase de planejamento (nenhum código
+ainda escrito). Serve como referência de "por que decidimos assim" antes
+de começar a implementação. Se uma decisão daqui for revista depois,
+adicione uma nota explicando o motivo em vez de apagar a original.
+
+ATUALIZAÇÃO 2026-08-14 (mesmo dia, início do scaffold): a decisão de
+build tool mudou de Gradle multi-módulo (seção 3 original, como os
+agentes desenharam) para MAVEN multi-módulo. Motivo: ao começar o
+scaffold, Gradle não estava disponível no ambiente (nem instalado nem
+wrapper), enquanto Maven 3.9.9 já estava, e os outros dois projetos
+Kotlin/Java do usuário (`fin-mec`, `users-api`) já usam Maven — trocar
+manteve consistência com o ecossistema real sem abrir mão do requisito
+que motivou a escolha original (isolar qr-engine/qr-validation/qr-render
+de Spring): em Maven isso é garantido do mesmo jeito, dando a esses três
+módulos o pom agregador (sem Spring) como parent, e um parent DIFERENTE
+(spring-boot-starter-parent) só para qr-api — aggregation e inheritance
+são conceitos independentes em Maven, o que permite isso sem hack. Toda
+menção a "Gradle"/"build.gradle.kts" nas seções abaixo deve ser lida como
+"o equivalente em Maven" — a estrutura de 4 módulos e as fronteiras entre
+eles não mudaram, só a ferramenta.
+
+
+1. VISÃO DO PRODUTO
+--------------------
+Gerador de QR codes customizáveis (cor, forma dos módulos, gradiente,
+logo embutido) cujo diferencial central NÃO é a customização visual em si
+(isso já está resolvido de sobra no mercado — QRCode Monkey, QR.io,
+QRCodeChimp, Adobe Express, e libs como qr-code-styling.com cobrem isso
+de forma madura e gratuita), e sim:
+
+  (a) um motor de VALIDAÇÃO DE ESCANEABILIDADE em tempo real, que garante
+      que a customização escolhida ainda resulta num QR legível por
+      câmera — e recusa deixar exportar o que não passar; e
+  (b) um encoder QR implementado do zero (matriz de módulos + correção de
+      erro Reed-Solomon sobre GF(256)), em vez de embrulhar uma lib
+      pronta como ZXing.
+
+Problema real que isso resolve e que os concorrentes não resolvem: eles
+deixam customizar cor/logo/gradiente livremente sem checar se o resultado
+ainda escaneia. Guias de troubleshooting (Bitly, Uniqode, QRSansar)
+descrevem esse exato padrão de falha — baixo contraste, logo cobrindo os
+finder patterns, correção de erro insuficiente — como causa recorrente de
+"QR não funciona", descoberta só depois de já ter impresso.
+
+
+2. ESCOPO DO V1 (decisões fechadas com o usuário — não revisitar sem
+   justificativa forte)
+---------------------------------------------------------------------
+- MVP focado no diferencial: QR ESTÁTICO customizável + validador de
+  escaneabilidade ao vivo + encoder próprio do zero. QR DINÂMICO
+  (redirect configurável + analytics de scan) fica para fase 2 — não é
+  v1, mas a API já é desenhada para não precisar de retrabalho quando
+  chegar (ver seção 5.4).
+- Self-hosted, single-tenant: sem sistema de contas/multiusuário no v1.
+- Encoder 100% próprio já no v1 — é o maior diferencial de portfólio do
+  projeto (padrão "build your own X", já usado com sucesso no catálogo
+  em outro projeto, o Mini-Redis em Kotlin).
+- Persistência: v1 não inclui histórico/listagem de QRs gerados
+  (gera → valida → exporta, sem salvar). Decisão de baixo custo de
+  reversão — se precisar depois, adiciona-se uma entidade e um endpoint
+  de criação sem quebrar o resto.
+
+
+3. ARQUITETURA GERAL
+---------------------
+Backend Kotlin + Spring Boot, multi-módulo Gradle. Frontend React
+consumindo a API via HTTP. Comunicação em dois modos:
+  - Round-trip ao backend só quando o CONTEÚDO ou o TAMANHO/PRESENÇA DO
+    LOGO mudam (porque isso afeta a matriz codificada e o nível de
+    correção de erro necessário).
+  - Puramente local/instantâneo no front quando é só cor/gradiente/forma
+    dos módulos mudando (cosmético, não muda a matriz).
+
+Módulos do backend:
+
+    mec-qrsafe/
+    ├── qr-engine/       lib pura, zero dependência de framework
+    │                    (encoding, Reed-Solomon/GF256, matriz, máscara,
+    │                     format/version info)
+    ├── qr-validation/   lib pura, depende só de qr-engine
+    │                    (regras de escaneabilidade, ScanabilityEngine)
+    ├── qr-render/       geração de SVG/PNG a partir da QrMatrix, usado
+    │                    só no export final
+    └── qr-api/          único módulo com Spring Boot — controllers,
+                         DTOs, orquestração. Não tem regra de negócio de
+                         QR, só chama os módulos acima.
+
+Por que módulos Gradle separados, não só pacotes: é a única forma de
+GARANTIR que qr-engine e qr-validation não acabam importando Spring por
+acidente (o classpath deles simplesmente não tem a dependência) — reforça
+o requisito de "encoder puro, testável isoladamente".
+
+Teste de fumaça para saber se a fronteira está sendo respeitada: se em
+algum momento qr-engine ou qr-validation importar algo de
+org.springframework.* ou de qr-api.dto.*, a fronteira vazou.
+
+
+4. BACKEND — o encoder do zero
+--------------------------------
+Pipeline em estágios, cada um função pura recebendo o estágio anterior
+(testável isoladamente em cada etapa):
+
+  1. Seleção de modo/segmentação — Byte mode cobre tudo no v1 (não
+     otimizar segmentação mista agora, isso é otimização de tamanho, não
+     de corretude).
+  2. Bitstream — header (modo + character count) + dados + padding até o
+     número de codewords da versão/nível de correção escolhidos.
+  3. Reed-Solomon sobre GF(256) — o núcleo matemático mais arriscado do
+     projeto. Pipeline: polinômio de dados → polinômio gerador
+     G(x) = (x−α⁰)(x−α¹)... → divisão polinomial sobre GF(256). Usar
+     tabelas de log/antilog pré-computadas para acelerar a aritmética do
+     campo finito (é a técnica padrão usada por implementações reais).
+  4. Interleaving de blocos de dados + correção conforme a versão.
+  5. Posicionamento na matriz — finder patterns, alignment patterns,
+     timing patterns, depois os codewords em espiral.
+  6. Máscara — testar as 8 máscaras candidatas, pontuar cada uma pelas
+     regras de penalidade da especificação (N1–N4), escolher a de menor
+     penalidade.
+  7. Format/version info — protegidos por código BCH.
+
+Decisões de design em Kotlin:
+  - QrMatrix é imutável (construída por um builder mutável interno por
+    performance, exposta como valor imutável) — pode ser compartilhada
+    entre validador/renderer/API sem cópia defensiva.
+  - Módulo não é só um bit preto/branco: cada módulo carrega também um
+    ModuleType (FinderPattern, AlignmentPattern, TimingPattern, Data,
+    FormatInfo, QuietZone). É isso que permite ao qr-validation saber
+    "esse módulo é um finder pattern" consultando o tipo, em vez de
+    reimplementar a geometria de posicionamento por fora — sem isso, o
+    validador duplicaria conhecimento que já existe no encoder.
+
+Estratégia de teste (três camadas):
+  1. Unit tests contra vetores numéricos da especificação ISO/IEC 18004
+     (GF256, Reed-Solomon, BCH) — determinístico, sem I/O.
+  2. Golden-file tests: comparar a matriz gerada contra o output de uma
+     lib madura (ZXing só como referência de teste, nunca em produção)
+     para as mesmas entradas — pega bugs de posicionamento/máscara.
+  3. Teste de decodificação real: gerar o PNG e alimentar de volta num
+     decoder real (ZXing/zbar como decoder de teste) pra confirmar que
+     decodifica pro texto original — é o teste que prova que o QR
+     realmente escaneia, não só que "parece certo". Roda como suite
+     separada, mais lenta.
+
+
+5. BACKEND — motor de validação de escaneabilidade
+-----------------------------------------------------
+Regras de negócio como objetos de regra independentes
+(ScanabilityRule.evaluate(matrix, style) -> RuleResult), compostas pelo
+ScanabilityEngine. Cada regra tem ciclo de calibração próprio (contraste é
+threshold ajustável empiricamente; overlap de finder pattern é geometria
+fixa da spec) — separar evita que ajustar uma regra afete as outras.
+
+Regras concretas para o v1:
+  - Contraste: contraste de luminância entre cor "escura" e "clara" do
+    QR (fórmula WCAG/razão de luminância relativa). Começar com limiar
+    permissivo (~4.5:1) e apertar depois com dados reais de teste de
+    escaneamento, em vez de travar num número especulativo desde já.
+    Aplica-se ao ponto de MENOR contraste em gradientes, não à média.
+  - Cobertura de finder pattern: os 3 quadrados de canto + quiet zone ao
+    redor deles NUNCA podem ser cobertos por logo — hard block, não é
+    questão de threshold, é ali que o decoder localiza e orienta o QR
+    antes de tentar ler qualquer dado.
+  - Quiet zone: margem mínima de 4 módulos ao redor do QR sem nenhum
+    elemento — hard block, não ajustável por correção de erro.
+  - Área de logo: não é um número mágico fixo — o motor calcula quantos
+    codewords de dado o logo "rouba" (módulos cobertos tratados como
+    erro) e verifica se ainda está dentro da capacidade de correção do
+    nível escolhido.
+  - Auto-upgrade de correção de erro: quando um logo é adicionado/cresce,
+    o ErrorCorrectionAdvisor recalcula o nível mínimo necessário
+    (L→M→Q→H) e força o re-encode nesse nível ANTES de validar a área do
+    logo. A ordem importa: sobe a correção primeiro, valida depois.
+
+Saída: ScanabilityReport com score agregado + lista de violações, cada
+uma com severidade BLOCKING ou WARNING — não um booleano seco, porque a
+UI precisa poder dizer "quase lá, ajuste X" em vez de só sim/não.
+
+Conexão com a API: SEMPRE síncrona. Não há caso de uso para fila/worker
+aqui — o cálculo (contraste + geometria + capacidade RS) é aritmética
+pura sobre uma matriz de no máximo ~177×177 módulos, e o usuário está
+editando ao vivo, precisa de resposta em milissegundos. O debounce fica
+no front, não é motivo para tornar o backend assíncrono.
+
+
+6. BACKEND — API REST
+-----------------------
+    POST  /api/v1/qr-codes/preview     gera matriz + roda validação
+    POST  /api/v1/qr-codes/validate    só valida um payload de estilo
+                                        (mais leve, sem gerar matriz nova
+                                        se conteúdo/logo não mudaram)
+    GET   /api/v1/qr-codes/{id}/export?format=svg|png
+                                        gera o arquivo final; RECUSA se a
+                                        mesma validação reprovar o design,
+                                        independente do que o client
+                                        mostrou (nunca confiar só no
+                                        bloqueio de UI)
+
+Contrato de conteúdo já pensado para a fase 2 (QR dinâmico), sem exigir
+retrabalho na v1: o campo `content` já nasce como objeto com
+discriminador de tipo:
+
+    "content": { "type": "STATIC", "value": "https://exemplo.com" }
+
+e futuramente:
+
+    "content": { "type": "DYNAMIC", "redirectId": "abc123" }
+
+Isso não exige mudar nada em qr-engine nem qr-validation — eles recebem
+só uma string pra codificar, de onde ela vem é responsabilidade da API.
+NÃO criar tabela/entidade de redirect agora — é barato adicionar depois,
+caro (complexidade sem uso) modelar antes da hora.
+
+
+7. FRONTEND — estrutura de componentes (React)
+-------------------------------------------------
+    QrEditorPage
+    ├── QrDesignProvider           (Context + useReducer — estado local)
+    │   ├── CustomizationPanel     (conteúdo, cor, forma, logo)
+    │   ├── PreviewCanvas          (renderer canvas PRÓPRIO — ver seção 8)
+    │   ├── ScannabilityIndicator  (score/semáforo + lista de mensagens)
+    │   └── ExportBar              (botão desabilitado quando "inseguro")
+    ├── useQrDesign()              (estado do design, update instantâneo)
+    └── useScannabilityValidation() (debounce + chamada à API + cancela
+                                      requisições obsoletas via
+                                      AbortController)
+
+Gerenciamento de estado: Context + useReducer é suficiente para o v1 —
+uma única página de edição, sem estado global entre rotas (v1 é
+estático, sem conta de usuário). Não introduzir Redux/Zustand agora;
+revisitar se a fase 2 (QR dinâmico + eventual conta) trouxer estado
+cross-página de verdade.
+
+
+8. FRONTEND — renderização: renderer canvas próprio (decisão do usuário)
+---------------------------------------------------------------------------
+Dois modelos foram avaliados:
+
+  (A) ESCOLHIDO — Renderer canvas próprio: o front recebe do backend a
+      QrMatrix crua (já com o encoding do Kotlin aplicado) e desenha
+      localmente cor/forma/gradiente/logo sobre ela. Nenhuma lib de
+      terceiro faz encoding no client.
+  (B) Descartado — usar a lib pronta qr-code-styling (madura, MIT, boa
+      API de update incremental): mais rápido de implementar, mas ela
+      roda sua PRÓPRIA codificação interna no client — o que o usuário
+      vê 99% do tempo interagindo seria o encoding de terceiro, não o
+      Kotlin próprio, mesmo que o backend continue "oficial" por trás
+      para export/validação. Isso diluiria o pitch central do projeto
+      ("construímos o encoder do zero"), então foi descartado apesar de
+      ser objetivamente mais rápido de construir.
+
+Por que isso é viável sem virar gargalo de performance: o conteúdo
+codificado (matriz + nível de correção) só muda quando o TEXTO ou o
+TAMANHO/PRESENÇA DO LOGO mudam — não a cada ajuste de cor. Cor, forma dos
+módulos e gradiente são puramente cosméticos sobre uma matriz já buscada
+e podem ser repintados no canvas instantaneamente, sem round-trip. Só a
+mudança de conteúdo/logo precisa buscar uma matriz nova no backend
+(pouco frequente comparado a arrastar um color picker).
+
+Canvas (não SVG) para o preview: um QR customizável varia de ~21×21 até
+~177×177 módulos, cada um podendo ter cor/forma própria — em SVG isso são
+centenas a dezenas de milhares de nós DOM reconciliados a cada interação.
+Canvas desenha direto num bitmap e mantém performance estável
+independente da densidade de elementos. SVG entra só no export final sob
+demanda (útil pra impressão vetorial), quando é uma operação única, não
+repetida a cada tecla.
+
+Web Worker: não necessário no v1 — o único cálculo client-side é o
+redesenho cosmético via canvas, que é barato o suficiente pra rodar na
+main thread. A validação pesada já vive no backend. Revisitar só se
+entrar algum pré-check heurístico client-side no futuro.
+
+
+9. FRONTEND — comunicação do resultado de validação (UX)
+-------------------------------------------------------------
+Padrão inspirado em indicadores de força de senha e validação inline de
+formulários (mesmo problema estrutural: feedback contínuo sobre uma
+pontuação que muda a cada input, sem travar a digitação):
+
+  - Semáforo + score como sinal primário, tom informativo (cinza →
+    amarelo → verde/vermelho), não "ERRO" agressivo enquanto o usuário
+    ainda está ajustando.
+  - Mensagens específicas e acionáveis abaixo do badge, apontando pra
+    seção do painel responsável (ex.: "contraste entre módulo e fundo
+    está baixo" aponta pra seção de cor).
+  - Estado "validando..." sutil durante o debounce/round-trip (sem
+    spinner bloqueante).
+  - Cancelamento de requisições obsoletas (AbortController), pra uma
+    resposta antiga não sobrescrever um resultado mais recente chegando
+    fora de ordem.
+  - Bloqueio de export em DUAS camadas: client (UX — botão desabilitado
+    com tooltip) e server (crítico — o endpoint de export recusa gerar o
+    arquivo se a validação reprovar, independente do estado da UI).
+
+
+10. TABELA RESUMO DE TRADE-OFFS
+-----------------------------------
+Decisão                          | Alternativa descartada           | Por quê
+----------------------------------|-----------------------------------|----------------------------------------
+Encoder 100% próprio (Kotlin)    | Usar ZXing/lib madura             | É o diferencial central de portfólio;
+                                  |                                    | sem isso o projeto vira "mais um
+                                  |                                    | clone de customização visual"
+Validação sempre no backend,     | Duplicar regras em JS no client   | Validação é a garantia central do
+síncrona, fonte única de verdade |                                    | produto — se o client pudesse aprovar
+                                  |                                    | algo que o backend rejeita no export,
+                                  |                                    | a garantia vira ilusão
+Matriz crua do backend +         | Backend gera SVG pronto pra cada  | Cor/forma são interação de alta
+renderer canvas próprio no front | ajuste cosmético                  | frequência (arrastar slider) — gerar
+                                  |                                    | SVG no servidor a cada pixel é I/O
+                                  |                                    | desnecessário para algo que não muda
+                                  |                                    | legibilidade
+Renderer canvas escrito à mão    | Lib pronta (qr-code-styling)      | A lib faz encoding próprio no client,
+                                  |                                    | o que dilui a narrativa "o encoder é
+                                  |                                    | nosso" no que o usuário efetivamente
+                                  |                                    | vê funcionando
+Módulos Maven separados           | Pacotes dentro de um módulo só    | Só um módulo Maven à parte GARANTE
+(qr-engine, qr-validation, etc.) |                                    | (via classpath) que o encoder nunca
+                                  |                                    | importa Spring por acidente
+Maven multi-módulo (revisado     | Gradle multi-módulo (decisão      | Gradle não estava disponível no
+2026-08-14, ver nota no topo)    | original dos agentes)             | ambiente; Maven já estava e é o
+                                  |                                    | que fin-mec/users-api já usam —
+                                  |                                    | mesma garantia de isolamento via
+                                  |                                    | parent diferente pra qr-api
+Sem persistência no v1           | Já modelar entidade + histórico   | Baixo custo de reversão — adicionar
+(gera → valida → exporta)        | de QRs gerados                    | depois é barato; modelar agora é
+                                  |                                    | complexidade sem uso comprovado
+Sem QR dinâmico no v1, mas       | Ignorar o assunto até a fase 2    | O campo `content` já nasce com
+contrato de API já preparado     |                                    | discriminador de tipo (STATIC/
+para ele                         |                                    | DYNAMIC) pra não exigir retrabalho
+                                  |                                    | no encoder/validador quando chegar
+
+
+11. PESQUISA TÉCNICA DE BASE (fontes)
+------------------------------------------
+- Reed-Solomon / GF(256):
+  https://zread.ai/nuintun/qrcode/19-reed-solomon-error-correction
+  https://medium.com/@anusthan2019/the-mathematical-algorithm-behind-qr-codes-how-error-correction-makes-scanning-bulletproof-00c577ff128b
+
+- Pipeline completo da ISO/IEC 18004 (modo, bitstream, RS, interleaving,
+  posicionamento, máscara, format/version info):
+  https://qubittool.com/blog/qrcode-complete-guide
+  https://franckybox.com/wp-content/uploads/qrcode.pdf
+
+- Contraste/thresholding usado por decoders reais (Otsu, thresholding
+  adaptativo) — base pra simular a leitura de câmera no validador:
+  https://onlinelibrary.wiley.com/doi/10.1155/2017/4613628
+
+- Regras de escaneabilidade quebrada por customização (contraste, logo
+  sobre finder pattern, correção de erro insuficiente):
+  https://www.uniqode.com/blog/qr-code-best-practices/qr-code-not-working
+  https://bitly.com/blog/qr-code-not-working/
+  https://qrsansar.com/blog/qr-code-color-contrast-accessibility
+  https://scanova.io/blog/qr-code-error-correction/
+  https://www.qrcode.com/en/about/error_correction.html
+
+- Canvas vs SVG para renderização de alta densidade de elementos:
+  https://blog.logrocket.com/svg-vs-canvas/
+  https://www.fusioncharts.com/blog/canvas-vs-svg-charts/
+
+- Referência de UX (não copiar, só inspiração):
+  https://uxpatterns.dev/patterns/forms/password
+  https://designinginterfaces.com/patterns/password-strength-meter/
+  https://www.formcreatorai.com/inline-validation-error-messages-accessible-real-time
+
+- Concorrência direta (o que já existe, pra não reinventar o que já é
+  bom nem competir onde não há diferencial):
+  https://www.qrcode-monkey.com/
+  https://qr-code-styling.com/
+  https://github.com/Shane32/QRCoder
+  https://github.com/alexzhirkevich/custom-qr-generator
+  https://qrcodesunlimited.com/academy/for-business/dynamic-qr-codes-for-saas-business-the-solution-to-your-challenges
+
+
+12. PRÓXIMOS PASSOS (fora do escopo do v1, registrar aqui pra não perder)
+------------------------------------------------------------------------------
+- Fase 2 — QR dinâmico: módulo novo (qr-redirect) fora de qr-engine e
+  qr-validation, resolve `content.type == DYNAMIC` gerando uma URL curta
+  própria, registra analytics de scan. Não exige mudar o encoder nem o
+  validador.
+- Calibrar os limiares de contraste da regra de escaneabilidade com
+  testes reais de câmera (celulares diferentes, condições de luz
+  diferentes) assim que houver uma versão navegável — os números usados
+  no v1 são ponto de partida razoável, não verdade absoluta.
+- Se a fase 2 trouxer conta de usuário/multiusuário, revisitar a decisão
+  de estado local (Context + useReducer) — pode fazer sentido introduzir
+  uma lib de estado global nesse ponto, não antes.
+
+
+13. STATUS DO SCAFFOLD (atualizado em 2026-08-14, início da implementação)
+--------------------------------------------------------------------------------
+Implementado de verdade (compila, com testes passando):
+  - `qr-engine`: GF256 (aritmética de campo finito completa) e
+    ReedSolomonEncoder (geração de polinômio gerador + codewords de
+    correção), QrMatrix/QrMatrixBuilder/ModuleType, ErrorCorrectionLevel.
+  - `qr-validation`: ContrastRule (fórmula de contraste WCAG completa),
+    ScanabilityEngine (com só ContrastRule ativa), ScanabilityReport.
+  - `qr-render`: SvgRenderer (módulo quadrado, cor sólida).
+  - `qr-api`: aplicação Spring Boot sobe, endpoint `POST
+    /api/v1/qr-codes/validate` existe e está corretamente ligado ao
+    resto — mas retorna HTTP 501 até `QrEncoder` estar implementado
+    (GlobalExceptionHandler traduz o `TODO()` em resposta clara, não
+    stack trace cru).
+
+Ainda TODO (stub com `TODO()`, propositalmente não fingido):
+  - `QrEncoder.encode` — todo o pipeline além de Reed-Solomon (modo,
+    bitstream, interleaving, posicionamento na matriz, máscara,
+    format/version info).
+  - `FinderPatternOverlapRule` e `QuietZoneRule` — dependem de
+    `QrEncoder` posicionar os módulos de referência primeiro, e de
+    modelar a geometria (não só tamanho) do logo sobre a matriz.
+  - `ErrorCorrectionAdvisor` — hoje é um placeholder por faixa de
+    tamanho; a conta real (quantos codewords o logo cobre vs. capacidade
+    de correção) depende do encoder existir.
+  - Endpoints `/preview` e `/export` da API (só `/validate` existe).
+
+Ambiente: Java 21 em `C:\Program Files\Java\jdk-21` (o `JAVA_HOME` padrão
+da sessão aponta pro 17 — passar `JAVA_HOME` explícito ao rodar `mvn` até
+isso ser corrigido no ambiente, senão os testes falham com erro de
+versão de bytecode).
