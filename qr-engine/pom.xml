@@ -36,6 +36,24 @@
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+        <!--
+            ZXing SÓ em teste (seção 4 de DECISOES-E-TRADEOFFS.txt): o
+            encoder dele é a referência pra comparar a matriz módulo a
+            módulo, e o decoder prova que o QR gerado aqui realmente lê.
+            Em produção o encoder não usa nada do ZXing.
+        -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>${zxing.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>${zxing.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
