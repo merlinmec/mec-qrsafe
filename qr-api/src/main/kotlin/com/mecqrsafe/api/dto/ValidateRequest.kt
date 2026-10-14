@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
+import jakarta.validation.constraints.Size
 
 /**
  * Contrato de API — ver seção 6 de `DECISOES-E-TRADEOFFS.txt`. O campo
@@ -50,6 +51,14 @@ data class LogoRequest(
     @field:DecimalMin("0.0")
     @field:DecimalMax("100.0")
     val centerYPercent: Double = 50.0,
+    /**
+     * A imagem, como `data:image/png;base64,...` ou JPEG. Só o /export
+     * usa (o preview desenha o logo no próprio browser); é conferida lá
+     * antes de decodificar — ver `LogoImage` no qr-render. O teto aqui é
+     * só o tamanho do texto, ~1 MB de imagem em base64.
+     */
+    @field:Size(max = 1_400_000, message = "imagem do logo passa de 1 MB")
+    val imageDataUrl: String? = null,
 )
 
 enum class ErrorCorrectionRequest { AUTO, L, M, Q, H }

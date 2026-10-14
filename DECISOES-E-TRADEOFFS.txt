@@ -190,6 +190,8 @@ no front, não é motivo para tornar o backend assíncrono.
     POST  /api/v1/qr-codes/validate    só valida um payload de estilo
                                         (mais leve, sem gerar matriz nova
                                         se conteúdo/logo não mudaram)
+    [revisto na seção 16: virou POST /export com o corpo inteiro,
+     porque sem persistência não existe {id}]
     GET   /api/v1/qr-codes/{id}/export?format=svg|png
                                         gera o arquivo final; RECUSA se a
                                         mesma validação reprovar o design,
@@ -551,5 +553,56 @@ API: style.logo { widthPercent, centerXPercent, centerYPercent } no
 lugar de logoSizePercent; style.quietZoneModules; a resposta diz o nível
 e a versão em que o QR foi validado (no AUTO, o que o advisor escolheu).
 
-Ainda TODO: endpoints /preview e /export; frontend com o renderer canvas
-(desenhando a placa clara do logo).
+Ainda TODO (na época): endpoints /preview e /export — feitos na seção 16.
+
+
+16. ENDPOINTS /preview E /export (2026-10-14)
+-----------------------------------------------
+Revisão da seção 6: o export virou `POST /api/v1/qr-codes/export
+?format=svg|png&size=N` com o mesmo corpo do /validate, no lugar de
+`GET /{id}/export`. Um {id} pressupõe guardar o QR, e a seção 2/10
+decidiu "sem persistência no v1". Sem banco, o servidor recodifica e
+revalida a partir do próprio pedido — o que, de quebra, é a forma mais
+direta de cumprir "o export recusa se a validação reprovar, independente
+do que o client mostrou": não há estado salvo que possa divergir.
+Recusa = 422 (pedido bem formado, QR que não escaneia) com o mesmo
+relatório do /validate, pra UI mostrar o que ajustar.
+
+/preview: validação + a matriz + a caixa da placa do logo. A matriz vai
+como uma string por linha, uma letra por módulo (tipo na letra, cor na
+caixa) em vez de array de objetos — a versão 40 tem 185x185 módulos,
+~34 mil caracteres contra centenas de KB. O tipo vai junto pra o front
+desenhar os finders com forma própria sem reimplementar a geometria
+(mesmo argumento do ModuleType, seção 4). A caixa do logo vem pronta pra
+o front desenhar a placa exatamente onde a validação conferiu; por isso
+o LogoFootprint do qr-validation virou público e o qr-render recebe só
+uma LogoBox neutra (não depende do qr-validation).
+
+Imagem do logo: as regras só conhecem a caixa, mas o arquivo final
+precisa do logo. Entra como data URL opcional, usada só no export. É
+arquivo de terceiro entrando no servidor, então (LogoImage no qr-render):
+  - só PNG e JPEG; SVG fora porque é XML que pode ter script e
+    referência externa;
+  - até 1 MB, assinatura do formato conferida nos bytes;
+  - dimensões lidas do cabeçalho ANTES de decodificar e barradas acima
+    de 2048 px — um PNG de poucos KB pode declarar 30000x30000 e estourar
+    a memória (bomba de descompressão).
+Corpo da requisição: o Spring MVC não limita JSON (o limite do Tomcat é
+só pra formulário) e o @Size da imagem só roda depois do JSON inteiro na
+memória. Um filtro recusa acima de 2 MB (413) e sem Content-Length (411)
+antes da leitura.
+
+Arquivos: SVG em unidades de módulo, com os módulos escuros num único
+<path> (trechos vizinhos de cada linha juntos — ~4 mil trechos em vez de
+~15 mil <rect> na versão 40); PNG com módulo em pixels inteiros (módulo
+fracionário borra a borda) e lado limitado a 4096 px — por isso o lado
+final pode sair um pouco menor que o pedido. Resposta com download,
+no-store, nosniff e uma CSP que, se o SVG for aberto direto no browser,
+não deixa rodar script nem buscar nada fora.
+
+Testes: SVG remontado em matriz a partir do <path> e comparado módulo a
+módulo; PNG e um print do SVG renderizado no Chrome lidos pelo ZXing,
+com placa e logo de verdade.
+
+Ainda TODO: frontend com o renderer canvas (desenhando a placa clara do
+logo na caixa que o /preview devolve).
