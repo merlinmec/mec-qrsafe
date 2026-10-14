@@ -24,8 +24,7 @@ class QrCodeController(
 
     @PostMapping("/validate")
     fun validate(@Valid @RequestBody request: ValidateRequest): ScanabilityResponse {
-        val report = qrCodeService.validate(request)
-        return ScanabilityResponse.from(report)
+        return ScanabilityResponse.from(qrCodeService.validate(request))
     }
 
     // TODO: POST /preview (matriz + validação juntas)
