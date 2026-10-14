@@ -41,7 +41,7 @@ class FunctionPatternOverlapRule : ScanabilityRule {
         return Violation(
             rule = "function_pattern_overlap",
             severity = Severity.BLOCKING,
-            message = "O logo encosta em ${names.joinToString(" e ")} — o leitor depende " +
+            message = "O logo encosta ${names.joinToString(" e ")} — o leitor depende " +
                 "disso pra achar e decodificar o QR, e não há correção de erro ali. " +
                 "Diminua o logo ou afaste-o das bordas.",
         )
@@ -56,13 +56,14 @@ class FunctionPatternOverlapRule : ScanabilityRule {
             ModuleType.VERSION_INFO,
             ModuleType.DARK_MODULE,
         )
+        // Já com a preposição contraída: "O logo encosta nos quadrados dos cantos".
         val DESCRIPTIONS = mapOf(
-            ModuleType.FINDER_PATTERN to "os quadrados dos cantos",
-            ModuleType.SEPARATOR to "os quadrados dos cantos",
-            ModuleType.TIMING_PATTERN to "as linhas de sincronismo",
-            ModuleType.FORMAT_INFO to "a informação de formato",
-            ModuleType.VERSION_INFO to "a informação de versão",
-            ModuleType.DARK_MODULE to "a informação de formato",
+            ModuleType.FINDER_PATTERN to "nos quadrados dos cantos",
+            ModuleType.SEPARATOR to "nos quadrados dos cantos",
+            ModuleType.TIMING_PATTERN to "nas linhas de sincronismo",
+            ModuleType.FORMAT_INFO to "na informação de formato",
+            ModuleType.VERSION_INFO to "na informação de versão",
+            ModuleType.DARK_MODULE to "na informação de formato",
         )
     }
 }
