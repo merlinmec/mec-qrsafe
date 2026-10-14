@@ -5,10 +5,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 /**
- * Testes de propriedade estrutural, não vetores "oficiais" da spec —
- * esses ainda precisam ser adicionados separadamente (ver TODO na seção
- * 4 de `DECISOES-E-TRADEOFFS.txt`, camada 1 da estratégia de teste).
- * O que está aqui garante que a aritmética é internamente consistente.
+ * Testes de propriedade estrutural: garantem que a aritmética é
+ * internamente consistente. Os vetores numéricos ficam em
+ * `ReedSolomonEncoderTest`, e o campo inteiro é exercitado de verdade
+ * pela comparação com o ZXing em `QrEncoderAgainstZxingTest`.
  */
 class GF256Test {
 

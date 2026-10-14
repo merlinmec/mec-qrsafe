@@ -32,12 +32,7 @@ class QrCodeService(
             else -> ErrorCorrectionLevel.valueOf(request.errorCorrection.name)
         }
 
-        // TODO: QrEncoder.encode ainda lança TODO() — ver QrEncoder.kt.
-        // Esta chamada é estruturalmente correta (é assim que vai
-        // funcionar quando o encoder existir), mas hoje propaga
-        // NotImplementedError, tratado por GlobalExceptionHandler como
-        // HTTP 501.
-        val matrix = QrEncoder.encode(request.content.value, level)
+        val matrix = QrEncoder.encode(request.content.value, level).matrix
 
         return scanabilityEngine.evaluate(matrix, toQrStyle(request.style))
     }
