@@ -43,10 +43,25 @@
         <kotlin.compiler.jvmTarget>21</kotlin.compiler.jvmTarget>
         <junit-jupiter.version>5.11.3</junit-jupiter.version>
         <kotest.version>5.9.1</kotest.version>
+        <zxing.version>3.5.3</zxing.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <!--
+                BOM do JUnit primeiro: o kotlin-test-junit5 puxa o JUnit
+                5.10 por transitividade, e misturar com o 5.11 do
+                junit-jupiter quebra os testes parametrizados (a plataforma
+                5.10 não tem o método que o junit-jupiter-params 5.11 chama).
+                O BOM fixa a família inteira na mesma versão.
+            -->
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit-jupiter.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-stdlib</artifactId>
