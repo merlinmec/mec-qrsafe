@@ -56,16 +56,58 @@ data class MatrixResponse(
 /** Onde desenhar a placa do logo, em módulos e nas coordenadas da matriz — a mesma caixa que a validação conferiu. */
 data class LogoBoxResponse(val left: Double, val top: Double, val side: Double)
 
+/**
+ * O que está por dentro da matriz, pra a tela mostrar a conta e não só o
+ * veredito: a máscara escolhida, os blocos Reed-Solomon com quanto cada
+ * um corrige e quanto o logo destrói, e qual codeword cada módulo carrega
+ * (o "raio-X" — dá pra ver a intercalação espalhando o estrago do logo
+ * por todos os blocos).
+ *
+ * `codewordRows` segue as coordenadas de [MatrixResponse.rows]; -1 é
+ * módulo sem codeword (padrão fixo, quiet zone ou remainder bit).
+ */
+data class EngineeringResponse(
+    val mask: Int,
+    val symbolSize: Int,
+    val blockCount: Int,
+    val correctableErrorsPerBlock: Int,
+    val destroyedPerBlock: List<Int>,
+    val codewordBlocks: List<Int>,
+    val destroyedCodewords: List<Int>,
+    val codewordRows: List<List<Int>>,
+) {
+    companion object {
+        fun from(result: ValidationResult): EngineeringResponse {
+            val qr = result.qr
+            val codewords = qr.codewords
+            return EngineeringResponse(
+                mask = qr.mask,
+                symbolSize = qr.symbolSize,
+                blockCount = codewords.blockCount,
+                correctableErrorsPerBlock = codewords.correctableErrorsPerBlock,
+                destroyedPerBlock = result.logoDamage.destroyedPerBlock,
+                codewordBlocks = (0 until codewords.codewordCount).map { codewords.blockOf(it) },
+                destroyedCodewords = result.logoDamage.destroyedCodewords.sorted(),
+                codewordRows = (0 until qr.matrix.size).map { row ->
+                    (0 until qr.matrix.size).map { column -> codewords.codewordAt(row, column) ?: -1 }
+                },
+            )
+        }
+    }
+}
+
 data class PreviewResponse(
     val validation: ScanabilityResponse,
     val matrix: MatrixResponse,
     val logoBox: LogoBoxResponse?,
+    val engineering: EngineeringResponse,
 ) {
     companion object {
         fun from(result: ValidationResult): PreviewResponse = PreviewResponse(
             validation = ScanabilityResponse.from(result),
             matrix = MatrixResponse.from(result.qr),
             logoBox = result.logoFootprint?.let { LogoBoxResponse(it.left, it.top, it.side) },
+            engineering = EngineeringResponse.from(result),
         )
     }
 }

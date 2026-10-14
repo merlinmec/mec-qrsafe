@@ -36,3 +36,6 @@ bin/
 
 ### Guia de estudo local (nunca versionar) ###
 mec-explain.txt
+
+### Artefatos locais da skill de design (paginas de decisao, capturas de revisao) ###
+.impeccable/

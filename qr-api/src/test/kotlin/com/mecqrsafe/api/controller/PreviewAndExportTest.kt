@@ -93,6 +93,31 @@ class PreviewAndExportTest {
         assertEquals('s', rows[4][11], "separador ao lado do finder é claro")
         assertEquals('K', rows[size - 4 - 8][4 + 8], "dark module")
         assertTrue(rows.joinToString("").all { it in "FfSsAaTtIiVvKDdq" }, "só letras da legenda")
+
+        val blockCount = JsonPath.read<Int>(json, "$.engineering.blockCount")
+        val perBlock = JsonPath.read<List<Int>>(json, "$.engineering.destroyedPerBlock")
+        val destroyed = JsonPath.read<List<Int>>(json, "$.engineering.destroyedCodewords")
+        val codewordRows = JsonPath.read<List<List<Int>>>(json, "$.engineering.codewordRows")
+        val codewordBlocks = JsonPath.read<List<Int>>(json, "$.engineering.codewordBlocks")
+        assertEquals(blockCount, perBlock.size)
+        assertTrue(destroyed.isNotEmpty(), "um logo de 20% destrói codewords")
+        assertEquals(destroyed.size, perBlock.sum(), "a soma por bloco é o total de destruídos")
+        assertEquals(perBlock, (0 until blockCount).map { block -> destroyed.count { codewordBlocks[it] == block } })
+        assertEquals(size, codewordRows.size)
+        rows.forEachIndexed { row, letters ->
+            letters.forEachIndexed { column, letter ->
+                if (letter.uppercaseChar() != 'D') assertEquals(-1, codewordRows[row][column], "($row, $column) não é dado")
+            }
+        }
+    }
+
+    @Test
+    fun `preview sem logo nao destroi nenhum codeword`() {
+        post("/api/v1/qr-codes/preview", body()).andExpect {
+            status { isOk() }
+            jsonPath("$.engineering.destroyedCodewords.length()") { value(0) }
+            jsonPath("$.engineering.mask") { isNumber() }
+        }
     }
 
     @Test
