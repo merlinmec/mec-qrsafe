@@ -71,11 +71,41 @@ object QrEncoder {
 
         val unmasked = SymbolGrid(SymbolCapacity.symbolSize(version))
         FunctionPatterns.draw(unmasked, version, level)
-        DataPlacement.place(unmasked, allCodewords)
+        val codewordAt = DataPlacement.place(unmasked, allCodewords)
 
         val mask = forcedMask ?: chooseMask(unmasked, level)
         val symbol = withMask(unmasked, level, mask)
-        return QrCode(version, level, mask, withQuietZone(symbol, quietZone))
+        return QrCode(
+            version = version,
+            errorCorrectionLevel = level,
+            mask = mask,
+            quietZone = quietZone,
+            matrix = withQuietZone(symbol, quietZone),
+            codewords = codewordMap(codewordAt, symbol.size, quietZone, version, level),
+        )
+    }
+
+    /** O mapa de [DataPlacement] (coordenadas do símbolo) levado pras coordenadas da matriz com quiet zone. */
+    private fun codewordMap(
+        symbolCodewordAt: IntArray,
+        symbolSize: Int,
+        quietZone: Int,
+        version: Int,
+        level: ErrorCorrectionLevel,
+    ): CodewordMap {
+        val matrixSize = symbolSize + 2 * quietZone
+        val codewordAt = IntArray(matrixSize * matrixSize) { DataPlacement.NO_CODEWORD }
+        for (row in 0 until symbolSize) {
+            for (column in 0 until symbolSize) {
+                codewordAt[(row + quietZone) * matrixSize + column + quietZone] = symbolCodewordAt[row * symbolSize + column]
+            }
+        }
+        return CodewordMap(
+            matrixSize = matrixSize,
+            codewordAtModule = codewordAt,
+            blockOfCodeword = CodewordInterleaver.slots(version, level).map { it.block }.toIntArray(),
+            correctableErrorsPerBlock = SymbolCapacity.correctableErrorsPerBlock(version, level),
+        )
     }
 
     /** A de menor penalidade; no empate, a de menor número. */

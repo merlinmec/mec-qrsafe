@@ -17,9 +17,20 @@ package com.mecqrsafe.qrengine.matrix
  */
 internal object DataPlacement {
 
-    fun place(grid: SymbolGrid, codewords: IntArray) {
+    /** Marca, no mapa devolvido por [place], os módulos que não carregam codeword. */
+    const val NO_CODEWORD = -1
+
+    /**
+     * Desenha os bits e devolve, pra cada módulo (índice `linha * size +
+     * coluna`), o índice do codeword que ele carrega na sequência
+     * intercalada — ou [NO_CODEWORD] nos padrões fixos e nos remainder
+     * bits. É desse mapa que o qr-validation tira quantos codewords um
+     * logo destrói.
+     */
+    fun place(grid: SymbolGrid, codewords: IntArray): IntArray {
         val size = grid.size
         val totalBits = codewords.size * 8
+        val codewordAt = IntArray(size * size) { NO_CODEWORD }
         var bitIndex = 0
 
         var right = size - 1
@@ -36,6 +47,7 @@ internal object DataPlacement {
                     val dark = bitIndex < totalBits &&
                         (codewords[bitIndex ushr 3] ushr (7 - (bitIndex and 7))) and 1 == 1
                     grid.set(row, column, dark, ModuleType.DATA)
+                    if (bitIndex < totalBits) codewordAt[row * size + column] = bitIndex ushr 3
                     bitIndex++
                 }
             }
@@ -45,5 +57,6 @@ internal object DataPlacement {
         check(bitIndex >= totalBits) {
             "só couberam $bitIndex de $totalBits bits de dado na matriz"
         }
+        return codewordAt
     }
 }

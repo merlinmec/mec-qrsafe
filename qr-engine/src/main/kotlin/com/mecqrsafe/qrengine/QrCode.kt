@@ -18,6 +18,13 @@ data class QrCode(
     val errorCorrectionLevel: ErrorCorrectionLevel,
     /** Máscara escolhida, de 0 a 7. */
     val mask: Int,
+    /** Largura da margem clara em volta do símbolo, em módulos. */
+    val quietZone: Int,
     /** Matriz final, já com a quiet zone em volta (ver [QrEncoder.encode]). */
     val matrix: QrMatrix,
-)
+    /** Que codeword cada módulo de dado carrega e quanto cada bloco corrige. */
+    val codewords: CodewordMap,
+) {
+    /** Lado do símbolo em módulos, sem a quiet zone. */
+    val symbolSize: Int get() = matrix.size - 2 * quietZone
+}
