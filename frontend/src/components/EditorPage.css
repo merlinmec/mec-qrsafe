@@ -1,0 +1,187 @@
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  height: 56px;
+  padding: 0 var(--space-5);
+  background: rgb(255 255 255 / 0.92);
+  backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+
+.brand:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+
+.brand__name {
+  font-size: var(--text-lg);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.topbar__tagline {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-2);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar__link {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-2);
+  text-decoration: none;
+  padding: 7px 10px;
+  border-radius: var(--radius);
+  transition: background 160ms var(--ease-out), color 160ms var(--ease-out);
+}
+
+.topbar__link:hover {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+
+.topbar__link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+
+/*
+ * Três colunas no desktop largo: controles | QR + validação | por dentro.
+ * Em telas médias, "por dentro" desce pra baixo do QR; no celular, tudo
+ * empilha com o QR primeiro.
+ */
+.workspace {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr) 340px;
+  align-items: start;
+  min-height: 0;
+}
+
+.workspace__controls {
+  position: sticky;
+  top: 56px;
+  max-height: calc(100vh - 56px);
+  overflow-y: auto;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.workspace__preview {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-6) var(--space-8);
+  background: var(--stage);
+  min-height: calc(100vh - 56px);
+  align-content: start;
+}
+
+.workspace__checks {
+  width: 100%;
+  min-width: 0;
+  max-width: 520px;
+  display: grid;
+  gap: var(--space-4);
+}
+
+.workspace__inside {
+  position: sticky;
+  top: 56px;
+  height: calc(100vh - 56px);
+  overflow-y: auto;
+  padding: var(--space-6) var(--space-5);
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+@media (max-width: 1240px) {
+  .workspace {
+    grid-template-columns: 320px minmax(0, 1fr);
+  }
+
+  .workspace__inside {
+    grid-column: 2;
+    position: static;
+    height: auto;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .workspace__controls {
+    grid-row: span 2;
+  }
+}
+
+@media (max-width: 820px) {
+  .topbar__tagline {
+    display: none;
+  }
+
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .workspace__preview {
+    order: -1;
+    min-height: 0;
+    padding: var(--space-5) var(--space-4) var(--space-6);
+  }
+
+  .workspace__controls,
+  .workspace__inside {
+    grid-column: 1;
+    grid-row: auto;
+    position: static;
+    max-height: none;
+    height: auto;
+    border: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .workspace__inside {
+    padding: var(--space-5) var(--space-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar {
+    padding: 0 var(--space-4);
+  }
+
+  .topbar__link span,
+  .topbar__link {
+    font-size: var(--text-xs);
+  }
+}
