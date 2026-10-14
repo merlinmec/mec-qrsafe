@@ -41,8 +41,9 @@ mvn -pl qr-api spring-boot:run        # sobe a API em localhost:8080
 **Encoder completo**, do zero, sem lib pronta: byte mode (UTF-8), as 40
 versões nos 4 níveis de correção, Reed-Solomon com intercalação de
 blocos, padrões fixos, as 8 máscaras com as penalidades N1-N4 e
-format/version info com BCH. A matriz sai com a quiet zone e com o tipo de
-cada módulo (finder, timing, dado...), que é o que o validador consulta.
+format/version info com BCH. A matriz sai com a quiet zone, com o tipo de
+cada módulo (finder, timing, dado...) e com qual codeword cada módulo de
+dado carrega, que é o que o validador consulta.
 
 Testado em três camadas, como prevê a seção 4 de
 `DECISOES-E-TRADEOFFS.txt`:
@@ -56,7 +57,30 @@ Testado em três camadas, como prevê a seção 4 de
 
 O ZXing entra só nos testes, como referência e como leitor.
 
-A API `POST /api/v1/qr-codes/validate` funciona de ponta a ponta (gera a
-matriz e roda a validação). Ainda faltam: as regras de finder pattern e
-quiet zone, a conta real do `ErrorCorrectionAdvisor` (dependem de modelar
-o logo no estilo), os endpoints `/preview` e `/export` e o frontend.
+**Validação completa**: contraste, logo encostando em padrões fixos
+(finder, timing, format info), margem mínima de 4 módulos e a área do
+logo pela conta real — quantos codewords ele destrói em cada bloco contra
+quantos aquele bloco corrige. No modo AUTO, a correção sobe sozinha (M →
+Q → H) até o logo caber. Conferido contra o leitor do ZXing: a regra de
+área bloqueia exatamente quando o decodificador falha, e tudo que as
+regras aprovam é lido da imagem.
+
+A API `POST /api/v1/qr-codes/validate` funciona de ponta a ponta:
+
+```json
+{
+  "content": { "type": "STATIC", "value": "https://exemplo.com.br/cardapio?mesa=12" },
+  "style": {
+    "darkColor": "#000000", "lightColor": "#FFFFFF",
+    "logo": { "widthPercent": 25, "centerXPercent": 50, "centerYPercent": 50 },
+    "quietZoneModules": 4
+  },
+  "errorCorrection": "AUTO"
+}
+```
+
+```json
+{ "score": 1.0, "passed": true, "violations": [], "errorCorrectionLevel": "H", "version": 5 }
+```
+
+Ainda faltam os endpoints `/preview` e `/export` e o frontend.

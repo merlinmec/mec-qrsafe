@@ -476,7 +476,80 @@ apareceram agora porque antes o endpoint parava no 501):
   - junit-bom importado no pom pai: o kotlin-test-junit5 puxava o JUnit
     5.10 e, misturado com o 5.11, os testes parametrizados não rodavam.
 
-Ainda TODO: FinderPatternOverlapRule, QuietZoneRule e a conta real do
-ErrorCorrectionAdvisor (dependem de modelar posição/geometria do logo e a
-margem no QrStyle, e de o encoder expor quais codewords cada módulo de
-dado carrega); endpoints /preview e /export; frontend.
+Ainda TODO (na época): as regras de logo e margem — feitas na seção 15.
+
+
+15. REGRAS DE LOGO E MARGEM (2026-10-14)
+------------------------------------------
+Fecha as regras da seção 5 que dependiam do logo. Decisões e o que os
+testes mostraram:
+
+Modelo do logo: um QUADRADO OPACO com largura e centro em % do lado do
+SÍMBOLO (sem a margem). % do símbolo, não da imagem, pra a medida não
+mudar de sentido quando o advisor troca de versão. Quadrado opaco é o
+pior caso de um logo real (PNG com transparência cobre menos) — valida
+pelo pior caso, pode recusar algo que até leria, nunca aprova o que não
+lê. A margem (quietZoneModules) entrou no QrStyle e vai pro encoder como
+a quiet zone da matriz.
+
+O encoder passou a expor o CodewordMap: qual codeword cada módulo de
+dado carrega, de que bloco, e quantos erros cada bloco corrige. A
+correção por bloco desconta os codewords de proteção contra leitura
+errada das versões 1 a 3 (o "p" da tabela 9 da spec) — o ZXing não
+desconta, então ali a regra fica um pouco mais rígida que ele (lado
+seguro).
+
+As regras:
+  - FunctionPatternOverlapRule (era FinderPatternOverlapRule): bloqueia
+    logo encostando em finder, separador, timing, format info, version
+    info ou dark module — tudo que o leitor usa antes de ler dado e que
+    não tem correção de erro. A seção 5 só falava de finder; timing e
+    format info têm o mesmo problema, então entraram. Alignment pattern
+    ficou DE FORA: só corrige perspectiva, os leitores seguem sem ele, e
+    um logo centralizado a partir da versão 2 quase sempre o cobre —
+    proibir recusaria o caso de uso mais comum. Os testes leem com o
+    ZXing QRs com logo em cima do alignment do meio.
+  - QuietZoneRule: bloqueia margem < 4 módulos e logo saindo do símbolo.
+  - LogoCoverageRule (nova): a conta real de área. Codewords destruídos
+    por bloco contra a correção do nível; bloqueia acima de 100%, avisa
+    (WARNING) acima de 75% — usar a correção inteira no logo não deixa
+    margem pra sujeira/dobra/impressão ruim. 75% é ponto de partida, como
+    o limiar de contraste.
+  - ErrorCorrectionAdvisor: re-codifica em M, Q e H e fica no menor
+    nível em que o logo cabe sem aviso (senão no primeiro sem bloqueio,
+    senão no H pra regra reprovar). Precisa re-codificar de verdade
+    porque subir o nível pode subir a versão e mudar quais codewords o
+    logo cobre. Com logo começa no M, não no L: logo nunca deixa o QR com
+    menos correção do que teria sem logo.
+
+O que o teste com o leitor de verdade ensinou (LogoRulesAgainstReaderTest):
+  - Primeira versão contava um módulo como coberto só se o logo cobrisse
+    o CENTRO dele (é onde o leitor amostra). O ZXing discordou nos dois
+    sentidos: módulos só com a beirada coberta foram lidos errado, e
+    outros com o centro coberto por pouco foram lidos certo — a grade
+    que o leitor estima tem erro de fração de módulo. Agora qualquer
+    toque conta (lado seguro). Resultado: decodificando a matriz com
+    todo módulo tocado invertido, a regra bloqueia SE E SOMENTE SE o
+    decodificador falha — nem permissiva, nem exagerada.
+  - Pintar o logo invertendo os pixels (pior caso) fez a DETECÇÃO falhar
+    antes de qualquer dado ser lido, mesmo com folga na correção (6 de 8
+    codewords): a fronteira do logo criava desenhos parecidos com finder
+    patterns. Uma placa escura pequena no meio fez o mesmo — um 3x3
+    escuro é o miolo de um finder. Isso depende da ARTE do logo, não da
+    área; nenhuma regra geométrica decide.
+    DECISÃO DE PRODUTO: o renderer sempre desenha o logo sobre uma placa
+    sólida na cor CLARA do QR (o jeito recomendado de pôr logo em QR). É
+    esse o caso que a validação modela e que o teste de imagem confere,
+    em 3 resoluções. Limite conhecido: a arte do logo em si não é
+    analisada (um logo que desenha um finder dentro da placa ainda pode
+    confundir o leitor).
+
+Score: bloqueio tira 0.5, aviso tira 0.15 (piso 0). Só pra UI mostrar
+"quase lá"; quem decide se exporta é `passed`.
+
+API: style.logo { widthPercent, centerXPercent, centerYPercent } no
+lugar de logoSizePercent; style.quietZoneModules; a resposta diz o nível
+e a versão em que o QR foi validado (no AUTO, o que o advisor escolheu).
+
+Ainda TODO: endpoints /preview e /export; frontend com o renderer canvas
+(desenhando a placa clara do logo).
