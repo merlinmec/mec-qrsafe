@@ -65,7 +65,22 @@ Q → H) até o logo caber. Conferido contra o leitor do ZXing: a regra de
 área bloqueia exatamente quando o decodificador falha, e tudo que as
 regras aprovam é lido da imagem.
 
-A API `POST /api/v1/qr-codes/validate` funciona de ponta a ponta:
+### API
+
+Os três endpoints recebem o mesmo corpo:
+
+| Endpoint | Devolve |
+|---|---|
+| `POST /api/v1/qr-codes/validate` | só o resultado da validação |
+| `POST /api/v1/qr-codes/preview` | validação + a matriz crua pro renderer do front + onde vai a placa do logo |
+| `POST /api/v1/qr-codes/export?format=svg\|png&size=1024` | o arquivo final, ou **422** com os motivos se o QR não passar |
+
+O export revalida no servidor: o arquivo só sai se a validação aprovar,
+independente do que a interface mostrou. O logo vai sobre uma placa na
+cor clara, e a imagem dele (opcional, `logo.imageDataUrl`) é aceita só
+como PNG ou JPEG de até 1 MB e 2048 px, conferida antes de ser
+decodificada. Corpos acima de 2 MB são recusados antes de o JSON ser
+lido.
 
 ```json
 {
@@ -79,8 +94,15 @@ A API `POST /api/v1/qr-codes/validate` funciona de ponta a ponta:
 }
 ```
 
+Resposta do `/validate`:
+
 ```json
 { "score": 1.0, "passed": true, "violations": [], "errorCorrectionLevel": "H", "version": 5 }
 ```
 
-Ainda faltam os endpoints `/preview` e `/export` e o frontend.
+No `/preview`, a matriz vem como uma string por linha, um caractere por
+módulo: a letra é o tipo (`F` finder, `S` separador, `A` alignment, `T`
+timing, `I` format info, `V` version info, `K` dark module, `D` dado, `Q`
+quiet zone) e a caixa é a cor (maiúscula escuro, minúscula claro).
+
+Ainda falta o frontend.
