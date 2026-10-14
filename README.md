@@ -7,13 +7,12 @@ legível por câmera — e recusa deixar exportar o que não passar. Usa um
 encoder QR implementado do zero (Reed-Solomon sobre GF(256), sem lib
 pronta tipo ZXing).
 
-Antes de mexer no código, leia:
+![Editor do mec-qrsafe com o raio-X por bloco: os codewords do bloco 2 acesos e, em vermelho, os que o logo destrói](docs/editor.png)
 
-- **`DECISOES-E-TRADEOFFS.txt`** — arquitetura completa (módulos, API,
-  regras de negócio) e por que cada decisão foi tomada.
-- **`mec-explain.txt`** — guia de estudo: o que estudar pra entender o
-  projeto de verdade, e como explicar ele pra alguém de fora. Documento
-  vivo, atualizado conforme o projeto evolui.
+Antes de mexer no código, leia o **`DECISOES-E-TRADEOFFS.txt`**:
+arquitetura completa (módulos, API, regras de negócio) e por que cada
+decisão foi tomada. `PRODUCT.md` e `DESIGN.md` registram o público e o
+sistema visual do editor.
 
 ## Estrutura
 
@@ -21,19 +20,25 @@ Antes de mexer no código, leia:
 mec-qrsafe/
 ├── qr-engine/       encoder QR do zero — biblioteca pura, sem Spring
 ├── qr-validation/   motor de escaneabilidade — biblioteca pura, sem Spring
-├── qr-render/       geração de SVG a partir da matriz — sem Spring
-└── qr-api/          único módulo com Spring Boot
+├── qr-render/       geração de SVG/PNG a partir da matriz — sem Spring
+├── qr-api/          único módulo com Spring Boot
+└── frontend/        editor em React + Vite + TypeScript, renderer canvas próprio
 ```
 
 ## Rodar
 
 Requer Java 21 e Maven (ou o `JAVA_HOME` apontando pra um JDK 21 — nesta
 máquina, `C:\Program Files\Java\jdk-21`, mesmo que o `JAVA_HOME` padrão da
-sessão aponte pro 17).
+sessão aponte pro 17) e Node 22.12+.
 
 ```
-mvn test                              # roda todos os testes do reactor
+mvn install                           # compila e testa os módulos
 mvn -pl qr-api spring-boot:run        # sobe a API em localhost:8080
+
+cd frontend
+npm install
+npm run dev                           # editor em localhost:5173 (o /api vai pra 8080)
+npm test                              # testes do front (Vitest)
 ```
 
 ## Status (2026-10-14)
@@ -105,4 +110,15 @@ módulo: a letra é o tipo (`F` finder, `S` separador, `A` alignment, `T`
 timing, `I` format info, `V` version info, `K` dark module, `D` dado, `Q`
 quiet zone) e a caixa é a cor (maiúscula escuro, minúscula claro).
 
-Ainda falta o frontend.
+### Editor
+
+O frontend desenha a matriz do `/preview` num canvas próprio (nenhuma
+lib de QR no browser) e valida a cada ajuste: espera o usuário parar de
+mexer, cancela a requisição anterior, e só pede uma matriz nova quando
+conteúdo, logo, margem ou nível mudam — cor repinta local. Além do QR e
+do veredito, mostra a conta: versão, nível, máscara e a correção de erro
+bloco a bloco. O raio-X pinta cada módulo pelo tipo ou pelo bloco
+Reed-Solomon do seu codeword, com os destruídos pelo logo em vermelho, e
+passar o mouse num bloco acende os codewords dele. O logo pode ser
+arrastado direto no QR, e o botão de baixar fica travado (com o motivo
+escrito) enquanto o QR não passa.

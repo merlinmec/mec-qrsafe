@@ -604,5 +604,45 @@ Testes: SVG remontado em matriz a partir do <path> e comparado módulo a
 módulo; PNG e um print do SVG renderizado no Chrome lidos pelo ZXing,
 com placa e logo de verdade.
 
-Ainda TODO: frontend com o renderer canvas (desenhando a placa clara do
-logo na caixa que o /preview devolve).
+Ainda TODO (na época): o frontend — feito na seção 17.
+
+
+17. FRONTEND (2026-10-14)
+---------------------------
+Stack: React + Vite + TypeScript com CSS próprio (tokens em custom
+properties, sem framework de CSS), testes com Vitest + Testing Library.
+Entrega só local por enquanto (dev server do Vite com proxy de /api pra
+porta 8080); o jar único com a SPA fica pra quando houver deploy.
+
+Público: decidido com o usuário que quem a tela serve primeiro é quem
+avalia o portfólio. Isso mudou o escopo: além do veredito, a tela mostra
+a CONTA. O /preview passou a mandar `engineering` (máscara, blocos, quanto
+cada um corrige e quanto o logo destrói, e qual codeword cada módulo
+carrega), e a conta de dano saiu da LogoCoverageRule pra um LogoDamage
+público no qr-validation — regra e tela usam o mesmo número.
+
+Visual: depois de ver direções mais autorais, o usuário escolheu o padrão
+da categoria (régua: QRCode Monkey, QRCodeChimp, Adobe Express). O
+diferencial ficou no conteúdo: o painel "Por dentro do QR" com a correção
+bloco a bloco e o raio-X do canvas (por tipo de módulo, ou por bloco com
+os codewords destruídos em vermelho). Registrado em PRODUCT.md e
+DESIGN.md.
+
+Comunicação com a API (seções 8 e 9, agora implementadas):
+  - debounce de 180ms + AbortController: a requisição anterior é
+    cancelada assim que o design muda, então resposta velha nunca chega;
+  - /preview só quando a matriz muda (conteúdo, logo, margem, nível); cor
+    pede /validate e repinta local;
+  - o estado "conferindo" é derivado na renderização (o design atual não
+    é o da última resposta), sem setState dentro do efeito;
+  - durante o arraste do logo, a caixa é calculada no front com a mesma
+    conta do LogoFootprint, pra acompanhar o ponteiro sem esperar a rede;
+    com a matriz em dia vale a caixa do servidor;
+  - a imagem do logo só viaja no /export; o canvas a desenha local.
+
+Bloqueio em duas camadas, como planejado: o botão de baixar fica
+desabilitado (com o motivo escrito, via aria-describedby) enquanto o QR
+não passa ou a validação não terminou, e o servidor recusa de novo (422).
+
+Ainda TODO: forma dos módulos e gradiente (backend, export e editor);
+jar único servindo a SPA e uma demo pública; cartão no portfólio.

@@ -13,6 +13,7 @@ import com.mecqrsafe.render.RenderOptions
 import com.mecqrsafe.render.SvgRenderer
 import com.mecqrsafe.validation.Color
 import com.mecqrsafe.validation.ErrorCorrectionAdvisor
+import com.mecqrsafe.validation.LogoDamage
 import com.mecqrsafe.validation.LogoFootprint
 import com.mecqrsafe.validation.LogoStyle
 import com.mecqrsafe.validation.QrStyle
@@ -20,11 +21,12 @@ import com.mecqrsafe.validation.ScanabilityEngine
 import com.mecqrsafe.validation.ScanabilityReport
 import org.springframework.stereotype.Service
 
-/** O QR que foi validado, o resultado e onde o logo caiu nele. */
+/** O QR que foi validado, o resultado, onde o logo caiu nele e o estrago que ele faz. */
 data class ValidationResult(
     val qr: QrCode,
     val report: ScanabilityReport,
     val logoFootprint: LogoFootprint?,
+    val logoDamage: LogoDamage,
 )
 
 enum class ExportFormat(val contentType: String, val extension: String) {
@@ -68,7 +70,12 @@ class QrCodeService(
             else -> QrEncoder.encode(request.content.value, ErrorCorrectionLevel.valueOf(level.name), style.quietZoneModules)
         }
 
-        return ValidationResult(qr, scanabilityEngine.evaluate(qr, style), style.logo?.let { LogoFootprint(qr, it) })
+        return ValidationResult(
+            qr = qr,
+            report = scanabilityEngine.evaluate(qr, style),
+            logoFootprint = style.logo?.let { LogoFootprint(qr, it) },
+            logoDamage = LogoDamage.of(qr, style.logo),
+        )
     }
 
     /**
