@@ -35,6 +35,22 @@
             <artifactId>kotlin-test-junit5</artifactId>
             <scope>test</scope>
         </dependency>
+        <!--
+            Leitor de QR de verdade, so nos testes: confere que as regras
+            de logo aprovam so o que um leitor real consegue ler.
+        -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>${zxing.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>${zxing.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

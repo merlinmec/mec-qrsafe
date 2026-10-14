@@ -1,6 +1,6 @@
 package com.mecqrsafe.validation.rules
 
-import com.mecqrsafe.qrengine.matrix.QrMatrix
+import com.mecqrsafe.qrengine.QrCode
 import com.mecqrsafe.validation.Color
 import com.mecqrsafe.validation.QrStyle
 import com.mecqrsafe.validation.ScanabilityRule
@@ -24,7 +24,7 @@ class ContrastRule(
     private val minimumContrastRatio: Double = 4.5,
 ) : ScanabilityRule {
 
-    override fun evaluate(matrix: QrMatrix, style: QrStyle): Violation? {
+    override fun evaluate(qr: QrCode, style: QrStyle): Violation? {
         val ratio = contrastRatio(style.darkModuleColor, style.lightModuleColor)
         if (ratio >= minimumContrastRatio) return null
 
