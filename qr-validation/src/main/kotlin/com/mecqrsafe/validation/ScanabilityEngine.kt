@@ -1,7 +1,10 @@
 package com.mecqrsafe.validation
 
-import com.mecqrsafe.qrengine.matrix.QrMatrix
+import com.mecqrsafe.qrengine.QrCode
 import com.mecqrsafe.validation.rules.ContrastRule
+import com.mecqrsafe.validation.rules.FunctionPatternOverlapRule
+import com.mecqrsafe.validation.rules.LogoCoverageRule
+import com.mecqrsafe.validation.rules.QuietZoneRule
 
 /**
  * Orquestra as [ScanabilityRule]s e agrega o resultado num
@@ -9,27 +12,26 @@ import com.mecqrsafe.validation.rules.ContrastRule
  * há caso de uso pra fila/worker aqui, o cálculo é aritmética pura sobre
  * uma matriz de no máximo ~177×177 módulos (ver seção 5 de
  * `DECISOES-E-TRADEOFFS.txt`).
- *
- * TODO: só [ContrastRule] está ativa. `FinderPatternOverlapRule` e
- * `QuietZoneRule` ainda lançam `TODO()` internamente (o encoder já marca
- * finder e quiet zone na matriz; falta modelar a geometria do logo e a
- * margem no QrStyle) — NÃO adicione elas na lista `rules` abaixo até
- * estarem implementadas de verdade, ou toda chamada a `evaluate` vai
- * quebrar.
  */
 class ScanabilityEngine(
     private val rules: List<ScanabilityRule> = listOf(
         ContrastRule(),
+        FunctionPatternOverlapRule(),
+        QuietZoneRule(),
+        LogoCoverageRule(),
     ),
 ) {
-    fun evaluate(matrix: QrMatrix, style: QrStyle): ScanabilityReport {
-        val violations = rules.mapNotNull { it.evaluate(matrix, style) }
-        val score = if (violations.isEmpty()) 1.0 else {
-            // Placeholder simples: 1 ponto perdido por violação, piso em 0.
-            // TODO: ponderar por severidade (BLOCKING deveria pesar mais
-            // que WARNING) assim que houver mais de uma regra ativa.
-            (1.0 - violations.size * 0.25).coerceAtLeast(0.0)
-        }
-        return ScanabilityReport(score, violations)
+    fun evaluate(qr: QrCode, style: QrStyle): ScanabilityReport {
+        val violations = rules.mapNotNull { it.evaluate(qr, style) }
+        // Score só pra UI mostrar "quase lá" — quem decide se exporta é
+        // ScanabilityReport.passed. Bloqueio pesa mais que aviso; os pesos
+        // são de partida, ajustar quando houver teste de escaneamento real.
+        val penalty = violations.sumOf { if (it.severity == Severity.BLOCKING) BLOCKING_WEIGHT else WARNING_WEIGHT }
+        return ScanabilityReport((1.0 - penalty).coerceAtLeast(0.0), violations)
+    }
+
+    private companion object {
+        const val BLOCKING_WEIGHT = 0.5
+        const val WARNING_WEIGHT = 0.15
     }
 }

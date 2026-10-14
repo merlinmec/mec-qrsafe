@@ -1,6 +1,10 @@
 package com.mecqrsafe.api.dto
 
 import jakarta.validation.Valid
+import jakarta.validation.constraints.DecimalMax
+import jakarta.validation.constraints.DecimalMin
+import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 
@@ -22,7 +26,30 @@ data class QrStyleRequest(
     val darkColor: String,
     @field:Pattern(regexp = "^#[0-9A-Fa-f]{6}$", message = "cor precisa estar em formato hex, ex.: #FFFFFF")
     val lightColor: String,
-    val logoSizePercent: Double? = null,
+    @field:Valid
+    val logo: LogoRequest? = null,
+    /** Margem clara em volta do QR, em módulos. Abaixo de 4 a validação bloqueia. */
+    @field:Min(0)
+    @field:Max(32)
+    val quietZoneModules: Int = 4,
+)
+
+/**
+ * Logo como um quadrado sobre o QR, em % do lado do símbolo (sem a
+ * margem) — ver `LogoStyle` no qr-validation. Tamanho e posição fora da
+ * faixa viram 400 aqui; dentro da faixa, quem decide se o QR ainda lê é
+ * a validação.
+ */
+data class LogoRequest(
+    @field:DecimalMin(value = "0.0", inclusive = false, message = "widthPercent precisa ser maior que 0")
+    @field:DecimalMax(value = "100.0", message = "widthPercent vai até 100")
+    val widthPercent: Double,
+    @field:DecimalMin("0.0")
+    @field:DecimalMax("100.0")
+    val centerXPercent: Double = 50.0,
+    @field:DecimalMin("0.0")
+    @field:DecimalMax("100.0")
+    val centerYPercent: Double = 50.0,
 )
 
 enum class ErrorCorrectionRequest { AUTO, L, M, Q, H }

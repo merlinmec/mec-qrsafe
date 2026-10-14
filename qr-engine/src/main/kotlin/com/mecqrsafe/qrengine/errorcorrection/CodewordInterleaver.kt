@@ -18,6 +18,9 @@ import com.mecqrsafe.qrengine.version.SymbolCapacity
  */
 internal object CodewordInterleaver {
 
+    /** Um lugar da sequência intercalada: de qual bloco vem e em que posição dele. */
+    data class Slot(val block: Int, val index: Int, val errorCorrection: Boolean)
+
     fun addErrorCorrectionAndInterleave(
         dataCodewords: IntArray,
         version: Int,
@@ -27,39 +30,60 @@ internal object CodewordInterleaver {
             "esperava ${SymbolCapacity.dataCodewords(version, level)} codewords de dado, vieram ${dataCodewords.size}"
         }
 
-        val blockCount = SymbolCapacity.errorCorrectionBlocks(version, level)
         val eccPerBlock = SymbolCapacity.eccCodewordsPerBlock(version, level)
-        val totalCodewords = SymbolCapacity.totalCodewords(version)
-        val shortBlockCount = blockCount - totalCodewords % blockCount
-        val shortBlockDataSize = totalCodewords / blockCount - eccPerBlock
-
-        val dataBlocks = ArrayList<IntArray>(blockCount)
-        val eccBlocks = ArrayList<IntArray>(blockCount)
+        val dataBlocks = ArrayList<IntArray>()
+        val eccBlocks = ArrayList<IntArray>()
         var offset = 0
-        for (block in 0 until blockCount) {
-            val size = shortBlockDataSize + if (block < shortBlockCount) 0 else 1
+        for (size in dataBlockSizes(version, level)) {
             val data = dataCodewords.copyOfRange(offset, offset + size)
             offset += size
             dataBlocks.add(data)
             eccBlocks.add(ReedSolomonEncoder.encode(data, eccPerBlock))
         }
 
-        val result = IntArray(totalCodewords)
-        var position = 0
-        // Primeiro os dados, coluna por coluna: o 1º codeword de cada
-        // bloco, depois o 2º de cada bloco... (os blocos curtos acabam um
-        // antes). Depois a correção, do mesmo jeito.
-        for (index in 0..shortBlockDataSize) {
-            for (block in dataBlocks) {
-                if (index < block.size) result[position++] = block[index]
+        return slots(version, level)
+            .map { slot -> (if (slot.errorCorrection) eccBlocks else dataBlocks)[slot.block][slot.index] }
+            .toIntArray()
+    }
+
+    /**
+     * A ordem da intercalação, sem os valores: o i-ésimo [Slot] diz de onde
+     * vem o i-ésimo codeword da sequência final. Primeiro os dados, coluna
+     * por coluna (o 1º codeword de cada bloco, depois o 2º de cada
+     * bloco... — os blocos curtos acabam um antes), depois a correção, do
+     * mesmo jeito.
+     *
+     * É a mesma ordem que [addErrorCorrectionAndInterleave] usa pra montar a
+     * sequência, e o que permite ao [com.mecqrsafe.qrengine.CodewordMap]
+     * dizer a que bloco pertence cada codeword desenhado na matriz.
+     */
+    fun slots(version: Int, level: ErrorCorrectionLevel): List<Slot> {
+        val sizes = dataBlockSizes(version, level)
+        val eccPerBlock = SymbolCapacity.eccCodewordsPerBlock(version, level)
+        val result = ArrayList<Slot>(SymbolCapacity.totalCodewords(version))
+        for (index in 0 until sizes.max()) {
+            for (block in sizes.indices) {
+                if (index < sizes[block]) result.add(Slot(block, index, errorCorrection = false))
             }
         }
         for (index in 0 until eccPerBlock) {
-            for (block in eccBlocks) {
-                result[position++] = block[index]
+            for (block in sizes.indices) {
+                result.add(Slot(block, index, errorCorrection = true))
             }
         }
-        check(position == totalCodewords) { "intercalação gerou $position codewords, esperava $totalCodewords" }
+        check(result.size == SymbolCapacity.totalCodewords(version)) {
+            "intercalação gerou ${result.size} codewords, esperava ${SymbolCapacity.totalCodewords(version)}"
+        }
         return result
+    }
+
+    /** Quantos codewords de dado vão em cada bloco: os curtos primeiro, os de 1 a mais no fim. */
+    private fun dataBlockSizes(version: Int, level: ErrorCorrectionLevel): IntArray {
+        val blockCount = SymbolCapacity.errorCorrectionBlocks(version, level)
+        val eccPerBlock = SymbolCapacity.eccCodewordsPerBlock(version, level)
+        val totalCodewords = SymbolCapacity.totalCodewords(version)
+        val shortBlockCount = blockCount - totalCodewords % blockCount
+        val shortBlockDataSize = totalCodewords / blockCount - eccPerBlock
+        return IntArray(blockCount) { block -> shortBlockDataSize + if (block < shortBlockCount) 0 else 1 }
     }
 }

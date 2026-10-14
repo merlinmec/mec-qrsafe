@@ -67,6 +67,27 @@ internal object SymbolCapacity {
         return result
     }
 
+    /**
+     * Quantos codewords errados cada bloco ainda consegue corrigir: metade
+     * dos codewords de correção (Reed-Solomon precisa de 2 pra achar e
+     * consertar cada erro de posição desconhecida), descontados os
+     * codewords que a spec reserva contra leitura errada nas versões 1 a 3
+     * (o "p" da nota da tabela 9) — neles a correção é só detecção.
+     */
+    fun correctableErrorsPerBlock(version: Int, level: ErrorCorrectionLevel): Int =
+        (eccCodewordsPerBlock(version, level) - misdecodeProtectionCodewords(version, level)) / 2
+
+    private fun misdecodeProtectionCodewords(version: Int, level: ErrorCorrectionLevel): Int = when (version) {
+        1 -> when (level) {
+            ErrorCorrectionLevel.L -> 3
+            ErrorCorrectionLevel.M -> 2
+            else -> 1
+        }
+        2 -> if (level == ErrorCorrectionLevel.L) 2 else 0
+        3 -> if (level == ErrorCorrectionLevel.L) 1 else 0
+        else -> 0
+    }
+
     fun totalCodewords(version: Int): Int = rawDataModules(version) / 8
 
     fun dataCodewords(version: Int, level: ErrorCorrectionLevel): Int =

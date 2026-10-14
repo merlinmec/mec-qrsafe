@@ -1,7 +1,7 @@
 package com.mecqrsafe.validation.rules
 
-import com.mecqrsafe.qrengine.matrix.ModuleType
-import com.mecqrsafe.qrengine.matrix.QrMatrixBuilder
+import com.mecqrsafe.qrengine.ErrorCorrectionLevel
+import com.mecqrsafe.qrengine.QrEncoder
 import com.mecqrsafe.validation.Color
 import com.mecqrsafe.validation.QrStyle
 import com.mecqrsafe.validation.Severity
@@ -11,9 +11,7 @@ import kotlin.test.assertNull
 
 class ContrastRuleTest {
 
-    private fun tinyMatrix() = QrMatrixBuilder(1).apply {
-        set(0, 0, dark = true, type = ModuleType.DATA)
-    }.build()
+    private val qr = QrEncoder.encode("contraste", ErrorCorrectionLevel.M)
 
     @Test
     fun `preto sobre branco passa facil`() {
@@ -21,7 +19,7 @@ class ContrastRuleTest {
             darkModuleColor = Color(0, 0, 0),
             lightModuleColor = Color(255, 255, 255),
         )
-        assertNull(ContrastRule().evaluate(tinyMatrix(), style))
+        assertNull(ContrastRule().evaluate(qr, style))
     }
 
     @Test
@@ -30,7 +28,7 @@ class ContrastRuleTest {
             darkModuleColor = Color(150, 150, 150),
             lightModuleColor = Color(200, 200, 200),
         )
-        val violation = ContrastRule().evaluate(tinyMatrix(), style)
+        val violation = ContrastRule().evaluate(qr, style)
         requireNotNull(violation)
         assertEquals(Severity.BLOCKING, violation.severity)
     }
