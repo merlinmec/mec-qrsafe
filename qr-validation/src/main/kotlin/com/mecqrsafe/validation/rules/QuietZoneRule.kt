@@ -10,15 +10,16 @@ import com.mecqrsafe.validation.Violation
  * block, não ajustável por correção de erro (ver seção 5 de
  * `DECISOES-E-TRADEOFFS.txt`).
  *
- * TODO: depende de `QrEncoder` já posicionar módulos `ModuleType.QUIET_ZONE`
- * na matriz (ainda não implementado — ver TODOs em `QrEncoder.kt`). Sem
- * isso, não há o que checar aqui além de "a quiet zone existe".
+ * TODO: o `QrEncoder` já entrega a matriz com a quiet zone marcada como
+ * `ModuleType.QUIET_ZONE`. Falta o lado do estilo: hoje [QrStyle] não tem
+ * nada que possa invadir a margem (margem configurável, moldura, logo
+ * fora do centro), então ainda não há o que esta regra reprove.
  */
 class QuietZoneRule : ScanabilityRule {
     override fun evaluate(matrix: QrMatrix, style: QrStyle): Violation? {
         TODO(
-            "Depende de QrEncoder posicionar ModuleType.QUIET_ZONE na matriz " +
-                "primeiro. Ver TODOs em QrEncoder.kt."
+            "Falta o QrStyle modelar o que pode invadir a quiet zone " +
+                "(margem, moldura, logo fora do centro). Ver TODO acima."
         )
     }
 }

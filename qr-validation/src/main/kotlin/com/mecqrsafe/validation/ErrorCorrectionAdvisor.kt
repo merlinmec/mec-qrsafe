@@ -10,8 +10,8 @@ import com.mecqrsafe.qrengine.ErrorCorrectionLevel
  *
  * TODO: a conta real é "quantos codewords de dado o logo cobre, e isso
  * ainda cabe na capacidade de correção do nível?" — não um número mágico
- * fixo de % de área. Isso depende de `QrEncoder` calcular quantos
- * codewords cada módulo coberto representa, o que ainda não existe.
+ * fixo de % de área. O `QrEncoder` já existe, mas ainda não expõe quais
+ * codewords cada módulo de dado carrega — é isso que falta pra conta.
  * O corpo abaixo é um placeholder conservador só pra não quebrar o
  * scaffold — NÃO é a regra de negócio final.
  */
@@ -21,8 +21,7 @@ object ErrorCorrectionAdvisor {
         if (logo == null) return ErrorCorrectionLevel.M
 
         // Placeholder grosseiro por faixa de tamanho — substituir pela
-        // conta real de codewords cobertos vs. capacidade de correção
-        // assim que QrEncoder existir de verdade.
+        // conta real de codewords cobertos vs. capacidade de correção.
         return when {
             logo.sizePercentOfMatrix <= 15.0 -> ErrorCorrectionLevel.Q
             logo.sizePercentOfMatrix <= 30.0 -> ErrorCorrectionLevel.H
