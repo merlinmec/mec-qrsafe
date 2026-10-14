@@ -33,3 +33,6 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Guia de estudo local (nunca versionar) ###
+mec-explain.txt
