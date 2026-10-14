@@ -36,6 +36,7 @@
         <java.version>21</java.version>
         <kotlin.version>2.1.0</kotlin.version>
         <mecqrsafe.modules.version>0.1.0-SNAPSHOT</mecqrsafe.modules.version>
+        <zxing.version>3.5.3</zxing.version>
     </properties>
 
     <dependencies>
@@ -92,6 +93,17 @@
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-test-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!--
+            Leitor de QR de verdade, so nos testes: o PNG que o /export
+            devolve precisa ler. Versao repetida aqui porque este modulo
+            herda do pom do Spring Boot, nao do pom raiz.
+        -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>${zxing.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
