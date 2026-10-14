@@ -1,5 +1,6 @@
 package com.mecqrsafe.api.dto
 
+import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 
@@ -27,7 +28,12 @@ data class QrStyleRequest(
 enum class ErrorCorrectionRequest { AUTO, L, M, Q, H }
 
 data class ValidateRequest(
+    // @Valid nos objetos aninhados: sem ele o Bean Validation para no
+    // primeiro nível e as regras de ContentRequest/QrStyleRequest (cor em
+    // hex, texto não vazio) nunca rodam.
+    @field:Valid
     val content: ContentRequest,
+    @field:Valid
     val style: QrStyleRequest,
     val errorCorrection: ErrorCorrectionRequest = ErrorCorrectionRequest.AUTO,
 )

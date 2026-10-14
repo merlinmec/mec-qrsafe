@@ -1,42 +1,110 @@
 package com.mecqrsafe.qrengine
 
-import com.mecqrsafe.qrengine.matrix.QrMatrix
+import com.mecqrsafe.qrengine.encoding.DataEncoder
+import com.mecqrsafe.qrengine.errorcorrection.CodewordInterleaver
+import com.mecqrsafe.qrengine.matrix.DataPlacement
+import com.mecqrsafe.qrengine.matrix.FormatInfo
+import com.mecqrsafe.qrengine.matrix.FunctionPatterns
+import com.mecqrsafe.qrengine.matrix.Masking
+import com.mecqrsafe.qrengine.matrix.ModuleType
+import com.mecqrsafe.qrengine.matrix.QrMatrixBuilder
+import com.mecqrsafe.qrengine.matrix.SymbolGrid
+import com.mecqrsafe.qrengine.version.SymbolCapacity
 
 /**
  * Fachada pública do encoder QR — o único ponto de entrada que qr-api e
  * qr-validation deveriam usar (não chamar as classes internas de
- * encoding/matrix/errorcorrection diretamente de fora deste módulo).
+ * encoding/matrix/errorcorrection diretamente de fora deste módulo; elas
+ * são `internal` justamente pra isso).
  *
- * Pipeline completo (ver seção 4 de `DECISOES-E-TRADEOFFS.txt` e ISO/IEC
- * 18004): modo de codificação → bitstream → Reed-Solomon (já implementado
- * em [com.mecqrsafe.qrengine.errorcorrection.ReedSolomonEncoder]) →
- * interleaving → posicionamento na matriz → 8 máscaras candidatas
- * avaliadas por penalidade → format/version info protegido por BCH.
+ * Pipeline (seção 4 de `DECISOES-E-TRADEOFFS.txt` e ISO/IEC 18004), cada
+ * estágio num arquivo próprio e testado sozinho:
  *
- * STATUS DESTE SCAFFOLD (2026-08-14): apenas [ErrorCorrectionLevel],
- * [com.mecqrsafe.qrengine.matrix.QrMatrix]/[com.mecqrsafe.qrengine.matrix.ModuleType]
- * e a aritmética Reed-Solomon (GF256 + geração de codewords de correção)
- * estão implementados de verdade. As etapas abaixo ainda são TODO — não
- * finja que este encoder já funciona ponta a ponta antes de implementá-las:
- *
- *   TODO modo de codificação / segmentação (byte mode cobre tudo no v1)
- *   TODO bitstream (header + dados + padding até o nº de codewords da versão)
- *   TODO interleaving de blocos de dados + correção conforme a versão
- *   TODO posicionamento na matriz (finder/alignment/timing patterns + dados)
- *   TODO as 8 máscaras candidatas + regras de penalidade N1-N4 da spec
- *   TODO format/version info protegidos por código BCH
- *
- * Ordem de implementação sugerida: seguir exatamente essa lista, cada
- * etapa com seus próprios testes antes de emendar na próxima — é assim
- * que a estratégia de teste em 3 camadas da seção 4 pretende funcionar.
+ *   1-2. [DataEncoder]: menor versão que comporta o texto + bitstream em
+ *        byte mode (modo, contagem, dados, terminador, padding)
+ *   3-4. [CodewordInterleaver]: blocos, Reed-Solomon de cada bloco
+ *        ([com.mecqrsafe.qrengine.errorcorrection.ReedSolomonEncoder]) e
+ *        intercalação
+ *   5.   [FunctionPatterns] + [DataPlacement]: padrões fixos e os bits de
+ *        dado em zigue-zague
+ *   6.   [Masking]: as 8 máscaras, fica a de menor penalidade
+ *   7.   [FormatInfo]: format/version info com BCH
  */
 object QrEncoder {
 
-    fun encode(content: String, level: ErrorCorrectionLevel): QrMatrix {
-        TODO(
-            "Pipeline do encoder ainda não implementado além da aritmética " +
-                "Reed-Solomon (GF256 + ReedSolomonEncoder). Ver TODOs no " +
-                "cabeçalho desta classe e a seção 4 de DECISOES-E-TRADEOFFS.txt."
-        )
+    /** Margem clara exigida pela spec em volta do símbolo, em módulos. */
+    const val DEFAULT_QUIET_ZONE = 4
+
+    /**
+     * Codifica [content] (como UTF-8) no nível [level], na menor versão
+     * em que ele cabe.
+     *
+     * A matriz devolvida já inclui a quiet zone de [quietZone] módulos
+     * claros em volta, com [ModuleType.QUIET_ZONE] — ela faz parte do QR
+     * (sem ela o leitor não acha a borda do símbolo), e é essa área que a
+     * regra de quiet zone do qr-validation confere.
+     *
+     * @throws IllegalArgumentException se o conteúdo não couber nem na versão 40.
+     */
+    fun encode(
+        content: String,
+        level: ErrorCorrectionLevel,
+        quietZone: Int = DEFAULT_QUIET_ZONE,
+    ): QrCode = encode(content, level, quietZone, forcedMask = null)
+
+    /** Igual ao público, mas permite fixar a máscara — usado nos testes contra o ZXing. */
+    internal fun encode(
+        content: String,
+        level: ErrorCorrectionLevel,
+        quietZone: Int,
+        forcedMask: Int?,
+    ): QrCode {
+        require(quietZone >= 0) { "quietZone não pode ser negativa, veio $quietZone" }
+        require(forcedMask == null || forcedMask in 0 until Masking.MASK_COUNT) {
+            "máscara precisa estar entre 0 e 7, veio $forcedMask"
+        }
+
+        val data = content.toByteArray(Charsets.UTF_8)
+        val version = DataEncoder.chooseVersion(data.size, level)
+        val dataCodewords = DataEncoder.encode(data, version, level)
+        val allCodewords = CodewordInterleaver.addErrorCorrectionAndInterleave(dataCodewords, version, level)
+
+        val unmasked = SymbolGrid(SymbolCapacity.symbolSize(version))
+        FunctionPatterns.draw(unmasked, version, level)
+        DataPlacement.place(unmasked, allCodewords)
+
+        val mask = forcedMask ?: chooseMask(unmasked, level)
+        val symbol = withMask(unmasked, level, mask)
+        return QrCode(version, level, mask, withQuietZone(symbol, quietZone))
     }
+
+    /** A de menor penalidade; no empate, a de menor número. */
+    private fun chooseMask(unmasked: SymbolGrid, level: ErrorCorrectionLevel): Int =
+        (0 until Masking.MASK_COUNT).minBy { mask -> Masking.penalty(withMask(unmasked, level, mask)) }
+
+    /** Cópia com a máscara aplicada e o format info dela já desenhado (a penalidade conta ele também). */
+    private fun withMask(unmasked: SymbolGrid, level: ErrorCorrectionLevel, mask: Int): SymbolGrid =
+        unmasked.copy().also { grid ->
+            Masking.apply(grid, mask)
+            FormatInfo.drawFormatBits(grid, level, mask)
+        }
+
+    private fun withQuietZone(symbol: SymbolGrid, quietZone: Int) =
+        QrMatrixBuilder(symbol.size + 2 * quietZone).apply {
+            for (row in 0 until size) {
+                for (column in 0 until size) {
+                    val symbolRow = row - quietZone
+                    val symbolColumn = column - quietZone
+                    val insideSymbol = symbolRow in 0 until symbol.size && symbolColumn in 0 until symbol.size
+                    if (insideSymbol) {
+                        val type = checkNotNull(symbol.type(symbolRow, symbolColumn)) {
+                            "módulo ($symbolRow, $symbolColumn) ficou sem tipo"
+                        }
+                        set(row, column, symbol.isDark(symbolRow, symbolColumn), type)
+                    } else {
+                        set(row, column, false, ModuleType.QUIET_ZONE)
+                    }
+                }
+            }
+        }.build()
 }

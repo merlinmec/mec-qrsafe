@@ -418,3 +418,65 @@ Ambiente: Java 21 em `C:\Program Files\Java\jdk-21` (o `JAVA_HOME` padrão
 da sessão aponta pro 17 — passar `JAVA_HOME` explícito ao rodar `mvn` até
 isso ser corrigido no ambiente, senão os testes falham com erro de
 versão de bytecode).
+
+
+14. ENCODER COMPLETO (2026-10-14)
+-----------------------------------
+A seção 13 vale como retrato do scaffold; esta registra o que mudou.
+
+Implementado: o pipeline inteiro da seção 4, um estágio por arquivo em
+qr-engine (DataEncoder, CodewordInterleaver, FunctionPatterns,
+DataPlacement, Masking, FormatInfo, com SymbolCapacity guardando as
+tabelas). A API /validate passou a funcionar de ponta a ponta.
+
+Decisões tomadas na implementação:
+  - Texto em UTF-8, SEM segmento ECI. ECI é o jeito formal de declarar o
+    charset, mas leitores antigos tropeçam nele; os atuais reconhecem
+    UTF-8 pelos próprios bytes (o teste de leitura real cobre acento,
+    japonês e emoji). Revisitar se aparecer leitor que erre o charset.
+  - A matriz devolvida JÁ INCLUI a quiet zone (4 módulos, configurável),
+    marcada como ModuleType.QUIET_ZONE. Ela faz parte do QR, e é a área
+    que a QuietZoneRule vai conferir — deixá-la só pro renderer obrigaria
+    o validador a "imaginar" uma margem que não está na matriz.
+  - QrEncoder.encode devolve QrCode (versão, nível, máscara + matriz), não
+    só a QrMatrix: a matriz é o contrato visual; versão/nível/máscara são
+    metadado do encoding, úteis pra API e pro ErrorCorrectionAdvisor.
+  - Novo ModuleType.DARK_MODULE (o módulo sempre escuro exigido pela spec),
+    em vez de classificá-lo como format info.
+  - Grade interna própria (SymbolGrid, Boolean num array plano) durante
+    padrões/dados/máscara; a QrMatrix imutável é montada uma vez, no fim.
+    A escolha de máscara monta e pontua 8 matrizes, e objeto por módulo
+    pesaria à toa.
+  - Penalidades N1-N4 implementadas como o ZXing implementa, inclusive o
+    detalhe em aberto na spec (na N3, a janela de 4 claros que sai da
+    matriz não conta). Com isso o teste exige a MESMA máscara que o ZXing
+    escolhe, não só um QR que leia.
+
+Testes (as três camadas da seção 4, todas implementadas):
+  1. vetores da spec: Reed-Solomon ("HELLO WORLD" 1-M), format info,
+     version info, capacidades, posições dos alignment patterns;
+  2. comparação módulo a módulo com o ZXing nas 40 versões x 4 níveis
+     (cada uma na capacidade máxima), em textos variados e com cada uma
+     das 8 máscaras forçadas;
+  3. leitura real pelo decoder do ZXing a partir de uma imagem.
+  Teste de mutação manual confirmou que eles pegam erro de verdade: um
+  número trocado na tabela de blocos falha a camada 2, e o zigue-zague
+  invertido falha todas as leituras da camada 3.
+
+Bugs do scaffold achados pelo primeiro teste de ponta a ponta da API (só
+apareceram agora porque antes o endpoint parava no 501):
+  - qr-api declarava o jackson-module-kotlin do Jackson 2, mas o Spring
+    Boot 4 usa o Jackson 3 e não registra o módulo antigo: um campo
+    opcional omitido no JSON virava null e a requisição quebrava.
+    Trocado por tools.jackson.module:jackson-module-kotlin.
+  - Faltava @Valid nos objetos aninhados de ValidateRequest, então as
+    regras de cor em hex e de content.type nunca rodavam (uma cor
+    inválida estourava como "For input string"). Corrigido, e o erro de
+    validação ganhou o mesmo formato de resposta dos outros erros.
+  - junit-bom importado no pom pai: o kotlin-test-junit5 puxava o JUnit
+    5.10 e, misturado com o 5.11, os testes parametrizados não rodavam.
+
+Ainda TODO: FinderPatternOverlapRule, QuietZoneRule e a conta real do
+ErrorCorrectionAdvisor (dependem de modelar posição/geometria do logo e a
+margem no QrStyle, e de o encoder expor quais codewords cada módulo de
+dado carrega); endpoints /preview e /export; frontend.

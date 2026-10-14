@@ -1,22 +1,32 @@
 package com.mecqrsafe.qrengine.errorcorrection
 
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
 /**
- * TODO (seção 4 de `DECISOES-E-TRADEOFFS.txt`, camada 1 da estratégia de
- * teste): faltam vetores numéricos OFICIAIS da especificação ISO/IEC
- * 18004 aqui. Os testes abaixo verificam uma propriedade matemática
- * independente da própria implementação (não reusam `encode` pra
- * verificar `encode`), mas não substituem comparar contra um exemplo
- * numérico da spec ou golden-file contra ZXing.
+ * Duas camadas: um vetor numérico conhecido ("HELLO WORLD" na versão
+ * 1-M) e uma propriedade matemática independente da implementação — o
+ * codeword completo (dados + correção) tem α^0, α^1, ..., α^(n-1) como
+ * raízes, que é a definição de um codeword Reed-Solomon válido, não
+ * importa como ele foi calculado.
  *
- * Propriedade verificada: o polinômio codeword completo
- * (dados seguidos dos codewords de correção) tem α^0, α^1, ..., α^(n-1)
- * como raízes — essa é a definição matemática de um codeword
- * Reed-Solomon válido, independente de como ele foi calculado.
+ * A correção dentro do QR inteiro (com vários blocos intercalados) é
+ * conferida contra o ZXing em `QrEncoderAgainstZxingTest`.
  */
 class ReedSolomonEncoderTest {
+
+    @Test
+    fun `correcao de HELLO WORLD na versao 1-M bate com o exemplo classico`() {
+        // Codewords de dado de "HELLO WORLD" em alphanumeric mode, versão
+        // 1-M, e os 10 de correção esperados — o exemplo resolvido passo a
+        // passo no tutorial de QR da Thonky, usado como referência por
+        // boa parte das implementações.
+        val data = intArrayOf(32, 91, 11, 120, 209, 114, 220, 77, 67, 64, 236, 17, 236, 17, 236, 17)
+        val expected = intArrayOf(196, 35, 39, 119, 235, 215, 231, 226, 93, 23)
+
+        assertContentEquals(expected, ReedSolomonEncoder.encode(data, 10))
+    }
 
     /** Avalia um polinômio em GF(256) via método de Horner. poly[0] = maior grau. */
     private fun evaluate(poly: IntArray, x: Int): Int {

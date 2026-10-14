@@ -48,9 +48,13 @@ class QrMatrix internal constructor(
 }
 
 /**
- * Builder mutável interno — usado durante a fase de posicionamento de
- * padrões e aplicação de máscara (TODO: ainda não implementado, ver
- * `QrEncoder`). Nunca deve ser exposto fora de `qr-engine`.
+ * Builder mutável que monta a [QrMatrix] imutável. O encoder desenha
+ * padrões, dados e máscara numa grade interna mais leve (`SymbolGrid`) e
+ * só passa por aqui no fim, ao acrescentar a quiet zone.
+ *
+ * É público porque os testes de qr-validation e qr-render montam
+ * matrizes pequenas à mão com ele; código de produção fora do qr-engine
+ * deveria receber matrizes só do [com.mecqrsafe.qrengine.QrEncoder].
  */
 class QrMatrixBuilder(val size: Int) {
     private val modules: Array<Array<Module?>> = Array(size) { arrayOfNulls(size) }

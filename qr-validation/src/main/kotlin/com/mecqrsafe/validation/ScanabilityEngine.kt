@@ -11,10 +11,11 @@ import com.mecqrsafe.validation.rules.ContrastRule
  * `DECISOES-E-TRADEOFFS.txt`).
  *
  * TODO: só [ContrastRule] está ativa. `FinderPatternOverlapRule` e
- * `QuietZoneRule` ainda lançam `TODO()` internamente (dependem de
- * QrEncoder posicionar os módulos de referência e de modelar a geometria
- * do logo) — NÃO adicione elas na lista `rules` abaixo até estarem
- * implementadas de verdade, ou toda chamada a `evaluate` vai quebrar.
+ * `QuietZoneRule` ainda lançam `TODO()` internamente (o encoder já marca
+ * finder e quiet zone na matriz; falta modelar a geometria do logo e a
+ * margem no QrStyle) — NÃO adicione elas na lista `rules` abaixo até
+ * estarem implementadas de verdade, ou toda chamada a `evaluate` vai
+ * quebrar.
  */
 class ScanabilityEngine(
     private val rules: List<ScanabilityRule> = listOf(

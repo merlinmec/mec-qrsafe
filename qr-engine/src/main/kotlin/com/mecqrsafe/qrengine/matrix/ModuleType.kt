@@ -16,6 +16,9 @@ enum class ModuleType {
     TIMING_PATTERN,
     FORMAT_INFO,
     VERSION_INFO,
+
+    /** Módulo sempre escuro ao lado do format info de baixo-esquerda (exigido pela spec). */
+    DARK_MODULE,
     DATA,
     QUIET_ZONE,
 }

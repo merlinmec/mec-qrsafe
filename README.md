@@ -36,13 +36,27 @@ mvn test                              # roda todos os testes do reactor
 mvn -pl qr-api spring-boot:run        # sobe a API em localhost:8080
 ```
 
-## Status (2026-08-14)
+## Status (2026-10-14)
 
-Fase inicial de scaffold. Implementado de verdade: `GF256` +
-`ReedSolomonEncoder` (aritmética de correção de erro), `QrMatrix`,
-`SvgRenderer`, `ContrastRule`, e a API REST básica (`POST
-/api/v1/qr-codes/validate`, ainda retorna HTTP 501 até o `QrEncoder`
-estar completo). O restante do pipeline do encoder (modo/bitstream,
-posicionamento na matriz, máscara, format info) e as regras de
-`FinderPatternOverlapRule`/`QuietZoneRule` ainda são `TODO()` — ver
-`DECISOES-E-TRADEOFFS.txt` seção 4 pra ordem de implementação sugerida.
+**Encoder completo**, do zero, sem lib pronta: byte mode (UTF-8), as 40
+versões nos 4 níveis de correção, Reed-Solomon com intercalação de
+blocos, padrões fixos, as 8 máscaras com as penalidades N1-N4 e
+format/version info com BCH. A matriz sai com a quiet zone e com o tipo de
+cada módulo (finder, timing, dado...), que é o que o validador consulta.
+
+Testado em três camadas, como prevê a seção 4 de
+`DECISOES-E-TRADEOFFS.txt`:
+
+1. vetores da especificação (Reed-Solomon, format/version info,
+   capacidade, posições dos alignment patterns);
+2. matriz idêntica à do ZXing, módulo a módulo e com a mesma máscara
+   escolhida, nas 40 versões × 4 níveis;
+3. leitura real: o QR vira imagem e o leitor do ZXing devolve o texto
+   original (acentos, japonês e emoji incluídos).
+
+O ZXing entra só nos testes, como referência e como leitor.
+
+A API `POST /api/v1/qr-codes/validate` funciona de ponta a ponta (gera a
+matriz e roda a validação). Ainda faltam: as regras de finder pattern e
+quiet zone, a conta real do `ErrorCorrectionAdvisor` (dependem de modelar
+o logo no estilo), os endpoints `/preview` e `/export` e o frontend.
