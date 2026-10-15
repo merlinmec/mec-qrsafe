@@ -201,4 +201,4 @@ Modo do palco: "estrutura" pinta os padrões fixos (finder violeta, timing verde
 - **Don't** usar verde, âmbar ou vermelho fora do veredito e das barras.
 - **Don't** usar vermelho como cor de bloco no raio-X.
 - **Don't** montar grade de "número grande com rótulo pequeno" para os dados técnicos; a inspeção é uma lista de chave e valor.
-- **Don't** prometer forma de módulo ou gradiente na interface enquanto o backend não suportar.
+- **Don't** oferecer uma forma de módulo ou de canto que não esteja no teste contra o leitor do backend (ShapesAgainstReaderTest).
