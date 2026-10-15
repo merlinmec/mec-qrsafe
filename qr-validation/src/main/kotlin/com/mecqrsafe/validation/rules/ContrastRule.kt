@@ -14,7 +14,9 @@ import kotlin.math.pow
  * abaixo do limiar configurado. Ver seção 5 de
  * `DECISOES-E-TRADEOFFS.txt`: "começar com limiar permissivo (~4.5:1) e
  * apertar depois com dados reais de teste de escaneamento, em vez de
- * travar num número especulativo desde já".
+ * travar num número especulativo desde já". A primeira rodada com câmera
+ * real (docs/CALIBRACAO.md, seção 21) manteve o 4,5:1: lendo da tela, a
+ * câmera já hesita perto de 2,5:1, e o caso real é o QR impresso.
  *
  * Com degradê, vale o PONTO DE MENOR CONTRASTE do caminho entre as duas
  * cores, nunca a média nem só as pontas: a luminância é soma de três
