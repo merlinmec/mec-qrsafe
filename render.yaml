@@ -27,5 +27,9 @@ services:
         value: "120"
       - key: MECQRSAFE_RATE_LIMIT_EXPORTS_PER_MINUTE
         value: "10"
+      # O Render fica atrás da Cloudflare: o IP real do visitante vem neste cabeçalho, que a
+      # Cloudflare sobrescreve (o do X-Forwarded-For, sozinho, é o do servidor da borda).
+      - key: MECQRSAFE_RATE_LIMIT_CLIENT_IP_HEADER
+        value: CF-Connecting-IP
       - key: LOGGING_LEVEL_COM_MECQRSAFE
         value: INFO

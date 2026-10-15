@@ -7,8 +7,9 @@ legível por câmera — e recusa deixar exportar o que não passar. Usa um
 encoder QR implementado do zero (Reed-Solomon sobre GF(256), sem lib
 pronta tipo ZXing).
 
-**Demo pública:** veja [`docs/DEMO.md`](docs/DEMO.md) (servidor gratuito:
-depois de um tempo parado, leva cerca de um minuto pra acordar).
+**Demo pública: https://mec-qrsafe.onrender.com** (servidor gratuito:
+depois de um tempo parado, leva cerca de um minuto pra acordar; como ela
+funciona em [`docs/DEMO.md`](docs/DEMO.md)).
 
 ![Editor do mec-qrsafe com o raio-X por bloco: os codewords do bloco 2 acesos e, em vermelho, os que o logo destrói](docs/editor.png)
 

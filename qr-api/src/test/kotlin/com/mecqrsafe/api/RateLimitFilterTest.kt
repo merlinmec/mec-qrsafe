@@ -64,6 +64,44 @@ class RateLimitFilterTest {
     }
 
     @Test
+    fun `atras da Cloudflare a cota e do IP do cabecalho, nao do servidor da borda`() {
+        val filter = RateLimitFilter(requestsPerMinute = 2, exportsPerMinute = 0, clientIpHeader = "CF-Connecting-IP", clock = clock)
+        fun viaEdge(edge: String) = MockHttpServletResponse().also { response ->
+            val request = MockHttpServletRequest("POST", "/api/v1/qr-codes/validate").apply {
+                remoteAddr = edge // muda a cada requisição, como os servidores da Cloudflare
+                addHeader("CF-Connecting-IP", "203.0.113.7")
+            }
+            filter.doFilter(request, response, MockFilterChain())
+        }
+
+        assertEquals(200, viaEdge("172.70.1.1").status)
+        assertEquals(200, viaEdge("172.70.2.2").status)
+        assertEquals(429, viaEdge("172.70.3.3").status)
+    }
+
+    @Test
+    fun `sem o cabecalho configurado o cabecalho do cliente e ignorado`() {
+        val filter = RateLimitFilter(requestsPerMinute = 1, exportsPerMinute = 0, clock = clock)
+        fun spoofed(fake: String) = MockHttpServletResponse().also { response ->
+            val request = MockHttpServletRequest("POST", "/api/v1/qr-codes/validate").apply {
+                remoteAddr = "203.0.113.7"
+                addHeader("CF-Connecting-IP", fake)
+            }
+            filter.doFilter(request, response, MockFilterChain())
+        }
+
+        assertEquals(200, spoofed("1.1.1.1").status)
+        assertEquals(429, spoofed("2.2.2.2").status)
+    }
+
+    @Test
+    fun `cabecalho configurado mas ausente cai no remoteAddr`() {
+        val filter = RateLimitFilter(requestsPerMinute = 1, exportsPerMinute = 0, clientIpHeader = "CF-Connecting-IP", clock = clock)
+        assertEquals(200, call(filter).status)
+        assertEquals(429, call(filter).status)
+    }
+
+    @Test
     fun `saude e arquivos do editor ficam fora do limite`() {
         val filter = RateLimitFilter(requestsPerMinute = 1, exportsPerMinute = 0, clock = clock)
         repeat(5) {
