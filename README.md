@@ -2,10 +2,13 @@
 
 Gerador de QR codes customizáveis com um diferencial central: um motor de
 **validação de escaneabilidade em tempo real**, que garante que a
-customização visual (cor, forma, logo) escolhida ainda resulta num QR
+customização visual (cores, logo, margem) escolhida ainda resulta num QR
 legível por câmera — e recusa deixar exportar o que não passar. Usa um
 encoder QR implementado do zero (Reed-Solomon sobre GF(256), sem lib
 pronta tipo ZXing).
+
+**Demo pública:** veja [`docs/DEMO.md`](docs/DEMO.md) (servidor gratuito:
+depois de um tempo parado, leva cerca de um minuto pra acordar).
 
 ![Editor do mec-qrsafe com o raio-X por bloco: os codewords do bloco 2 acesos e, em vermelho, os que o logo destrói](docs/editor.png)
 

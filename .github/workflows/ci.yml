@@ -41,3 +41,11 @@ jobs:
         run: npm test
       - name: Build (inclui a checagem de tipos)
         run: npm run build
+
+  # O Render publica o master sozinho: a imagem da demo precisa montar antes do merge.
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Imagem da demo
+        run: docker build -t mec-qrsafe-demo .

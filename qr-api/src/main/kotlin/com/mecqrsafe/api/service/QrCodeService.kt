@@ -20,6 +20,8 @@ import com.mecqrsafe.validation.QrStyle
 import com.mecqrsafe.validation.ScanabilityEngine
 import com.mecqrsafe.validation.ScanabilityReport
 import org.springframework.stereotype.Service
+import java.util.concurrent.Semaphore
+import java.util.concurrent.TimeUnit
 
 /** O QR que foi validado, o resultado, onde o logo caiu nele e o estrago que ele faz. */
 data class ValidationResult(
@@ -45,6 +47,9 @@ class ExportedFile(val bytes: ByteArray, val format: ExportFormat)
 /** O export foi recusado porque o QR não passou na validação — leva o resultado pra API mostrar o motivo. */
 class NotScannableException(val result: ValidationResult) : RuntimeException("o QR não passou na validação")
 
+/** Exportações demais ao mesmo tempo — a API responde 503 e o usuário tenta de novo. */
+class ExportBusyException : RuntimeException("O servidor está gerando outros arquivos agora. Tente de novo em alguns segundos.")
+
 /**
  * Orquestra qr-engine + qr-validation + qr-render — sem regra de negócio
  * de QR aqui (isso mora nos módulos puros), só tradução DTO <-> domínio
@@ -56,6 +61,13 @@ class QrCodeService(
     private val scanabilityEngine: ScanabilityEngine = ScanabilityEngine(),
     private val errorCorrectionAdvisor: ErrorCorrectionAdvisor = ErrorCorrectionAdvisor(),
 ) {
+
+    private val exportSlots = Semaphore(MAX_CONCURRENT_EXPORTS)
+
+    private companion object {
+        const val MAX_CONCURRENT_EXPORTS = 2
+        const val EXPORT_WAIT_SECONDS = 10L
+    }
 
     fun validate(request: ValidateRequest): ValidationResult {
         require(request.content.type == "STATIC") {
@@ -90,6 +102,18 @@ class QrCodeService(
         val result = validate(request)
         if (!result.report.passed) throw NotScannableException(result)
 
+        // Um PNG de 4096 px ocupa ~64 MB enquanto é desenhado; o plano
+        // gratuito da demo tem 512 MB. Poucos exports por vez, os outros
+        // esperam um pouco e, se não der, recebem 503.
+        if (!exportSlots.tryAcquire(EXPORT_WAIT_SECONDS, TimeUnit.SECONDS)) throw ExportBusyException()
+        try {
+            return render(request, result, format, sizePx)
+        } finally {
+            exportSlots.release()
+        }
+    }
+
+    private fun render(request: ValidateRequest, result: ValidationResult, format: ExportFormat, sizePx: Int): ExportedFile {
         val options = RenderOptions(
             darkColor = request.style.darkColor.uppercase(),
             lightColor = request.style.lightColor.uppercase(),

@@ -1,6 +1,7 @@
 package com.mecqrsafe.api
 
 import com.mecqrsafe.api.dto.ScanabilityResponse
+import com.mecqrsafe.api.service.ExportBusyException
 import com.mecqrsafe.api.service.NotScannableException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -50,6 +51,13 @@ class GlobalExceptionHandler {
     fun handleBadRequest(ex: IllegalArgumentException): ResponseEntity<ErrorResponse> =
         ResponseEntity.badRequest()
             .body(ErrorResponse("bad_request", ex.message))
+
+    /** 503: exportações demais ao mesmo tempo (limite de memória da demo). */
+    @ExceptionHandler(ExportBusyException::class)
+    fun handleExportBusy(ex: ExportBusyException): ResponseEntity<ErrorResponse> =
+        ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+            .header("Retry-After", "5")
+            .body(ErrorResponse("busy", ex.message))
 
     /** 422: o pedido está bem formado, mas o QR resultante não escaneia — o servidor não gera o arquivo. */
     @ExceptionHandler(NotScannableException::class)
