@@ -6,6 +6,7 @@ import com.mecqrsafe.validation.QrStyle
 import com.mecqrsafe.validation.ScanabilityRule
 import com.mecqrsafe.validation.Severity
 import com.mecqrsafe.validation.Violation
+import java.util.Locale
 import kotlin.math.pow
 
 /**
@@ -35,7 +36,7 @@ class ContrastRule(
             rule = "contrast",
             severity = Severity.BLOCKING,
             message = "Contraste entre módulo escuro e claro está em " +
-                "%.2f:1%s, abaixo do mínimo de %.1f:1 — a câmera pode não ".format(ratio, where, minimumContrastRatio) +
+                String.format(PT_BR, "%.2f:1%s, abaixo do mínimo de %.1f:1 — a câmera pode não ", ratio, where, minimumContrastRatio) +
                 "conseguir distinguir os módulos em pouca luz.",
         )
     }
@@ -72,5 +73,8 @@ class ContrastRule(
 
     private companion object {
         const val GRADIENT_SAMPLES = 256
+
+        /** A mensagem é em português: "4,50:1" em qualquer servidor (o container da demo roda em inglês). */
+        val PT_BR: Locale = Locale.of("pt", "BR")
     }
 }

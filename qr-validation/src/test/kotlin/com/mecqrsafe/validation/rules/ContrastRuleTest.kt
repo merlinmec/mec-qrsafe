@@ -35,6 +35,19 @@ class ContrastRuleTest {
     }
 
     @Test
+    fun `mensagem usa virgula decimal mesmo num servidor em ingles`() {
+        val original = java.util.Locale.getDefault()
+        java.util.Locale.setDefault(java.util.Locale.US) // o container da demo no Render roda assim
+        try {
+            val violation = requireNotNull(ContrastRule().evaluate(qr, QrStyle(Color(150, 150, 150), Color(200, 200, 200))))
+            assertContains(violation.message, "1,77:1")
+            assertContains(violation.message, "mínimo de 4,5:1")
+        } finally {
+            java.util.Locale.setDefault(original)
+        }
+    }
+
+    @Test
     fun `degrade escuro sobre branco passa`() {
         val style = QrStyle(Color(0x1A, 0x1A, 0x2E), Color(255, 255, 255), darkGradientEnd = Color(0x6D, 0x28, 0xD9))
         assertNull(ContrastRule().evaluate(qr, style))
