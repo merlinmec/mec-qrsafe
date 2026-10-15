@@ -2,13 +2,19 @@ package com.mecqrsafe.validation
 
 import com.mecqrsafe.qrengine.QrEncoder
 
-/**
- * Cor sólida ou ponto de MENOR contraste de um gradiente — é isso que a
- * [com.mecqrsafe.validation.rules.ContrastRule] deve avaliar, nunca a
- * média (ver seção 5 de `DECISOES-E-TRADEOFFS.txt`: "aplica-se ao ponto
- * de menor contraste em gradientes, não à média").
- */
-data class Color(val red: Int, val green: Int, val blue: Int)
+/** Cor em RGB de 0 a 255 por canal. */
+data class Color(val red: Int, val green: Int, val blue: Int) {
+    init {
+        require(listOf(red, green, blue).all { it in 0..255 }) { "canal de cor fora de 0–255: ($red, $green, $blue)" }
+    }
+
+    /** A cor a [t] (0 a 1) do caminho até [other], misturando canal a canal como o canvas e o SVG fazem. */
+    fun mix(other: Color, t: Double): Color = Color(
+        red = Math.round(red + (other.red - red) * t).toInt(),
+        green = Math.round(green + (other.green - green) * t).toInt(),
+        blue = Math.round(blue + (other.blue - blue) * t).toInt(),
+    )
+}
 
 /**
  * Logo como um quadrado opaco por cima do símbolo. As medidas são
@@ -55,6 +61,16 @@ data class QrStyle(
      * [com.mecqrsafe.validation.rules.QuietZoneRule] recusa abaixo de 4.
      */
     val quietZoneModules: Int = QrEncoder.DEFAULT_QUIET_ZONE,
+    /**
+     * Segunda cor dos módulos quando eles vão em degradê (de
+     * [darkModuleColor] até esta). Linear ou radial não importa aqui: os
+     * dois passam por todas as misturas entre as duas cores, e é o pior
+     * ponto desse caminho que a
+     * [com.mecqrsafe.validation.rules.ContrastRule] avalia (seção 5 de
+     * `DECISOES-E-TRADEOFFS.txt`: "ponto de MENOR contraste, não a média").
+     * O tipo e o ângulo do degradê são assunto do qr-render.
+     */
+    val darkGradientEnd: Color? = null,
 ) {
     init {
         require(quietZoneModules >= 0) { "quietZoneModules não pode ser negativa, veio $quietZoneModules" }

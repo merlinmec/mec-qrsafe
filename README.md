@@ -2,7 +2,8 @@
 
 Gerador de QR codes customizáveis com um diferencial central: um motor de
 **validação de escaneabilidade em tempo real**, que garante que a
-customização visual (cores, logo, margem) escolhida ainda resulta num QR
+customização visual (cores e degradê, forma dos módulos e dos cantos, logo,
+margem) escolhida ainda resulta num QR
 legível por câmera — e recusa deixar exportar o que não passar. Usa um
 encoder QR implementado do zero (Reed-Solomon sobre GF(256), sem lib
 pronta tipo ZXing).
@@ -97,7 +98,10 @@ lido.
   "style": {
     "darkColor": "#000000", "lightColor": "#FFFFFF",
     "logo": { "widthPercent": 25, "centerXPercent": 50, "centerYPercent": 50 },
-    "quietZoneModules": 4
+    "quietZoneModules": 4,
+    "moduleShape": "DOTS",
+    "eyeShape": "CIRCLE",
+    "gradient": { "type": "LINEAR", "endColor": "#6D28D9", "angleDegrees": 45 }
   },
   "errorCorrection": "AUTO"
 }

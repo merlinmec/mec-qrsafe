@@ -15,26 +15,38 @@ import kotlin.math.pow
  * apertar depois com dados reais de teste de escaneamento, em vez de
  * travar num número especulativo desde já".
  *
- * TODO: hoje só avalia a cor sólida configurada em [QrStyle]. Quando o
- * front suportar gradiente de verdade, isso precisa avaliar o PONTO DE
- * MENOR CONTRASTE do gradiente, não a cor base — ver nota na doc de
- * QrStyle.Color.
+ * Com degradê, vale o PONTO DE MENOR CONTRASTE do caminho entre as duas
+ * cores, nunca a média nem só as pontas: a luminância é soma de três
+ * canais que podem andar em sentidos opostos, então o pior ponto pode
+ * cair no meio. O caminho é amostrado em [GRADIENT_SAMPLES] pontos — com
+ * canais de 8 bits, a mistura muda no máximo 255 vezes, e a variação de
+ * contraste entre amostras vizinhas fica muito abaixo da margem do limiar.
  */
 class ContrastRule(
     private val minimumContrastRatio: Double = 4.5,
 ) : ScanabilityRule {
 
     override fun evaluate(qr: QrCode, style: QrStyle): Violation? {
-        val ratio = contrastRatio(style.darkModuleColor, style.lightModuleColor)
+        val (ratio, worst) = worstContrast(style)
         if (ratio >= minimumContrastRatio) return null
 
+        val where = if (style.darkGradientEnd == null) "" else " no ponto mais claro do degradê (${hex(worst)})"
         return Violation(
             rule = "contrast",
             severity = Severity.BLOCKING,
             message = "Contraste entre módulo escuro e claro está em " +
-                "%.2f:1, abaixo do mínimo de %.1f:1 — a câmera pode não ".format(ratio, minimumContrastRatio) +
+                "%.2f:1%s, abaixo do mínimo de %.1f:1 — a câmera pode não ".format(ratio, where, minimumContrastRatio) +
                 "conseguir distinguir os módulos em pouca luz.",
         )
+    }
+
+    /** O menor contraste ao longo dos módulos (cor sólida ou o caminho do degradê) e a cor onde ele ocorre. */
+    private fun worstContrast(style: QrStyle): Pair<Double, Color> {
+        val end = style.darkGradientEnd ?: return contrastRatio(style.darkModuleColor, style.lightModuleColor) to style.darkModuleColor
+        return (0..GRADIENT_SAMPLES)
+            .map { step -> style.darkModuleColor.mix(end, step.toDouble() / GRADIENT_SAMPLES) }
+            .map { color -> contrastRatio(color, style.lightModuleColor) to color }
+            .minBy { it.first }
     }
 
     /** Fórmula de contraste de luminância relativa (mesma base do WCAG). */
@@ -55,4 +67,10 @@ class ContrastRule(
 
     private fun linearize(channel: Double): Double =
         if (channel <= 0.03928) channel / 12.92 else ((channel + 0.055) / 1.055).pow(2.4)
+
+    private fun hex(color: Color) = "#%02X%02X%02X".format(color.red, color.green, color.blue)
+
+    private companion object {
+        const val GRADIENT_SAMPLES = 256
+    }
 }

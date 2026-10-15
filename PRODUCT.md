@@ -20,7 +20,7 @@ Secundário (o usuário do produto em si): quem precisa de um QR customizado com
 
 ## Product Purpose
 
-Gerador de QR code customizável (cores, logo, margem, nível de correção) que valida a escaneabilidade ao vivo e recusa exportar o que não lê. Sucesso: o avaliador entende em segundos que a validação é real — vê o logo crescer, a correção subir sozinha, o QR ser bloqueado no ponto exato em que deixaria de ler — e que o encoder por trás foi escrito do zero.
+Gerador de QR code customizável (cores e degradê, forma dos módulos e dos cantos, logo, margem, nível de correção) que valida a escaneabilidade ao vivo e recusa exportar o que não lê. Sucesso: o avaliador entende em segundos que a validação é real — vê o logo crescer, a correção subir sozinha, o QR ser bloqueado no ponto exato em que deixaria de ler — e que o encoder por trás foi escrito do zero.
 
 ## Positioning
 
@@ -36,7 +36,7 @@ Os geradores do mercado (QRCode Monkey, QR.io, QRCodeChimp, Adobe Express, qr-co
 
 - v1: QR estático, sem contas, sem persistência (gera → valida → exporta).
 - Customização disponível no backend hoje: cor escura, cor clara, logo (quadrado com largura e centro em % do símbolo, imagem PNG/JPEG opcional até 1 MB e 2048 px), margem em módulos, nível de correção (AUTO, L, M, Q, H).
-- Forma dos módulos e gradiente estão no plano, mas ainda NÃO existem no backend nem no export — não prometer na interface.
+- Forma dos módulos (quadrado, arredondado, pontos), dos cantos (quadrado, arredondado, círculo) e degradê (linear ou radial) existem no backend, no export e no editor; cada combinação oferecida é lida pelo ZXing nos testes. Formas novas só entram com o mesmo teste.
 - O logo é sempre desenhado sobre uma placa na cor clara (decisão da seção 15: placa escura imita um finder pattern).
 - Validação no backend é a fonte única de verdade; o front não reimplementa regra.
 - Interface em português (pt-BR).

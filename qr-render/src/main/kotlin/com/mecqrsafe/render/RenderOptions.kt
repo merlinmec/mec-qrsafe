@@ -30,6 +30,10 @@ data class RenderOptions(
     val lightColor: String = "#FFFFFF",
     val logoBox: LogoBox? = null,
     val logoImage: LogoImage? = null,
+    val moduleShape: ModuleShape = ModuleShape.SQUARE,
+    val eyeShape: EyeShape = EyeShape.SQUARE,
+    /** Degradê nos módulos escuros; `null` = cor sólida [darkColor]. */
+    val gradient: Gradient? = null,
 ) {
     init {
         require(HEX.matches(darkColor)) { "darkColor precisa ser #RRGGBB, veio $darkColor" }

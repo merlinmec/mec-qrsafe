@@ -1,5 +1,8 @@
 package com.mecqrsafe.api.dto
 
+import com.mecqrsafe.render.EyeShape
+import com.mecqrsafe.render.GradientType
+import com.mecqrsafe.render.ModuleShape
 import jakarta.validation.Valid
 import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.DecimalMin
@@ -33,6 +36,23 @@ data class QrStyleRequest(
     @field:Min(0)
     @field:Max(32)
     val quietZoneModules: Int = 4,
+    /** Forma dos módulos. Não muda a validação: toda forma oferecida é lida pelo ZXing nos testes do qr-render. */
+    val moduleShape: ModuleShape = ModuleShape.SQUARE,
+    /** Forma dos três quadrados dos cantos (finder patterns). */
+    val eyeShape: EyeShape = EyeShape.SQUARE,
+    /** Degradê nos módulos escuros, de `darkColor` até `gradient.endColor`; muda o contraste avaliado. */
+    @field:Valid
+    val gradient: GradientRequest? = null,
+)
+
+data class GradientRequest(
+    val type: GradientType = GradientType.LINEAR,
+    @field:Pattern(regexp = "^#[0-9A-Fa-f]{6}$", message = "cor precisa estar em formato hex, ex.: #6D28D9")
+    val endColor: String,
+    /** Só no linear: 0 = da esquerda pra direita, 90 = de cima pra baixo. */
+    @field:DecimalMin("0.0")
+    @field:DecimalMax("360.0")
+    val angleDegrees: Double = 0.0,
 )
 
 /**

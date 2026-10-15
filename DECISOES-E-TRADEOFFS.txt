@@ -644,5 +644,43 @@ Bloqueio em duas camadas, como planejado: o botão de baixar fica
 desabilitado (com o motivo escrito, via aria-describedby) enquanto o QR
 não passa ou a validação não terminou, e o servidor recusa de novo (422).
 
-Ainda TODO: forma dos módulos e gradiente (backend, export e editor);
-jar único servindo a SPA e uma demo pública; cartão no portfólio.
+Ainda TODO (na época): forma, degradê, demo e portfólio — a demo e o
+cartão saíram nos PRs #5 e #6 (docs/DEMO.md); forma e degradê na seção 18.
+
+
+18. FORMA DOS MÓDULOS, DOS OLHOS E DEGRADÊ (2026-10-14)
+---------------------------------------------------------
+Módulos: quadrado, arredondado (canto de 0,3 módulo) ou pontos
+(diâmetro 0,9). Olhos — os três finder patterns de 7x7 — quadrado,
+arredondado ou círculo, desenhados inteiros: moldura de 7, furo de 5 e
+miolo de 3. Degradê nos módulos escuros: linear com ângulo (a linha
+atravessa o símbolo de canto a canto naquela direção) ou radial (do
+centro ao canto do símbolo).
+
+Forma NÃO virou regra de validação. A garantia é o teste
+ShapesAgainstReaderTest no qr-render: toda combinação oferecida (forma ×
+olho × degradê × logo, em duas versões e duas resoluções — 108 casos) é
+lida pelo ZXing. Uma forma que não lesse sairia do produto, não seria
+"avisada". O teste reprova pontos pequenos demais (conferido encolhendo
+o ponto para 35% do módulo). Olho em círculo, que costuma assustar, leu
+em todos os casos.
+
+Degradê VIROU validação, como a seção 5 previa: a ContrastRule mede o
+PONTO DE MENOR CONTRASTE do caminho entre as duas cores, amostrado em 256
+pontos — não a média, nem só as pontas. Com fundo claro o pior ponto é
+sempre uma ponta (a luminância linearizada é convexa no caminho), mas
+num QR invertido (módulos claros sobre fundo escuro) o pior ponto pode
+cair no meio: vermelho e verde passam sozinhos contra o preto e a mistura
+marrom do meio não. Linear ou radial não muda a conta — os dois passam
+por todas as misturas —, então a validação só recebe a cor final.
+
+Duas implementações do desenho (o canvas do editor e o PNG/SVG do
+servidor) são o custo da seção 8 (renderer próprio no front). Pra não
+divergirem, as medidas moram em QrGeometry (Kotlin) e são repetidas em
+frontend/src/render/geometry.ts com o aviso nos dois lados; o teste
+ponta a ponta confere que o print do preview, o PNG baixado e o SVG
+renderizado no Chrome são lidos pelo ZXing e saem iguais. O raio-X
+continua em módulos quadrados: ele mostra a estrutura, não a aparência.
+
+Forma e degradê são cosméticos para a matriz: mudam só o /validate
+(contraste) e o export, nunca pedem um /preview novo.

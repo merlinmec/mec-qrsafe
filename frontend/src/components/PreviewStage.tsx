@@ -66,6 +66,9 @@ export function PreviewStage(props: {
       modules,
       darkColor: design.darkColor,
       lightColor: design.lightColor,
+      moduleShape: design.moduleShape,
+      eyeShape: design.eyeShape,
+      gradient: design.gradientEnabled ? design.gradient : null,
       logoBox,
       logoImage,
       modulePx,
@@ -73,7 +76,23 @@ export function PreviewStage(props: {
       engineering: stale ? null : preview.engineering,
       highlightBlock,
     })
-  }, [modules, preview, size, modulePx, design.darkColor, design.lightColor, logoBox, logoImage, xray, stale, highlightBlock])
+  }, [
+    modules,
+    preview,
+    size,
+    modulePx,
+    design.darkColor,
+    design.lightColor,
+    design.moduleShape,
+    design.eyeShape,
+    design.gradientEnabled,
+    design.gradient,
+    logoBox,
+    logoImage,
+    xray,
+    stale,
+    highlightBlock,
+  ])
 
   function toModules(event: PointerEvent<HTMLCanvasElement>) {
     const rect = event.currentTarget.getBoundingClientRect()

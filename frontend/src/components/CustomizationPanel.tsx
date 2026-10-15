@@ -1,9 +1,9 @@
 import { ArrowLeftRight, Crosshair, ImagePlus, Sparkles, Trash2 } from 'lucide-react'
 import { useRef, useState } from 'react'
-import type { ErrorCorrection, ValidationResponse } from '../api/types'
+import type { ErrorCorrection, EyeShape, GradientType, ModuleShape, ValidationResponse } from '../api/types'
 import { useQrDesign } from '../design/useQrDesign'
 import { LOGO_ACCEPT, LogoFileError, readLogoFile, sampleLogoDataUrl } from '../lib/logo'
-import { ColorField, Section, Segmented, Slider } from './ui/controls'
+import { ColorField, Section, Segmented, Slider, Toggle } from './ui/controls'
 import './CustomizationPanel.css'
 
 const EXAMPLES = [
@@ -18,6 +18,23 @@ const LEVEL_OPTIONS: { value: ErrorCorrection; label: string; title: string }[] 
   { value: 'M', label: 'M', title: 'Corrige ~15% dos codewords' },
   { value: 'Q', label: 'Q', title: 'Corrige ~25% dos codewords' },
   { value: 'H', label: 'H', title: 'Corrige ~30% dos codewords' },
+]
+
+const MODULE_SHAPE_OPTIONS: { value: ModuleShape; label: string }[] = [
+  { value: 'SQUARE', label: 'Quadrado' },
+  { value: 'ROUNDED', label: 'Arredondado' },
+  { value: 'DOTS', label: 'Pontos' },
+]
+
+const EYE_SHAPE_OPTIONS: { value: EyeShape; label: string; title: string }[] = [
+  { value: 'SQUARE', label: 'Quadrado', title: 'Os três quadrados dos cantos (finder patterns)' },
+  { value: 'ROUNDED', label: 'Arredondado', title: 'Os três quadrados dos cantos (finder patterns)' },
+  { value: 'CIRCLE', label: 'Círculo', title: 'Os três quadrados dos cantos (finder patterns)' },
+]
+
+const GRADIENT_OPTIONS: { value: GradientType; label: string }[] = [
+  { value: 'LINEAR', label: 'Linear' },
+  { value: 'RADIAL', label: 'Radial' },
 ]
 
 export function CustomizationPanel({ validation }: { validation: ValidationResponse | null }) {
@@ -83,6 +100,56 @@ export function CustomizationPanel({ validation }: { validation: ValidationRespo
           <ColorField label="Módulos" value={design.darkColor} onChange={(value) => dispatch({ type: 'setDarkColor', value })} />
           <ColorField label="Fundo" value={design.lightColor} onChange={(value) => dispatch({ type: 'setLightColor', value })} />
         </div>
+        <Toggle
+          label="Degradê nos módulos"
+          checked={design.gradientEnabled}
+          onChange={(value) => dispatch({ type: 'setGradientEnabled', value })}
+        />
+        {design.gradientEnabled && (
+          <div className="gradient-controls">
+            <div className="color-pair">
+              <ColorField
+                label="Até a cor"
+                value={design.gradient.endColor}
+                onChange={(value) => dispatch({ type: 'setGradient', value: { endColor: value } })}
+              />
+              <Segmented
+                label="Tipo"
+                value={design.gradient.type}
+                options={GRADIENT_OPTIONS}
+                onChange={(value) => dispatch({ type: 'setGradient', value: { type: value } })}
+              />
+            </div>
+            {design.gradient.type === 'LINEAR' && (
+              <Slider
+                label="Direção"
+                value={design.gradient.angleDegrees}
+                min={0}
+                max={360}
+                step={15}
+                unit="°"
+                onChange={(value) => dispatch({ type: 'setGradient', value: { angleDegrees: value } })}
+              />
+            )}
+            <p className="field__hint">O contraste é conferido no ponto mais claro do degradê, não na média.</p>
+          </div>
+        )}
+      </Section>
+
+      <Section id="forma" title="Forma">
+        <Segmented
+          label="Módulos"
+          value={design.moduleShape}
+          options={MODULE_SHAPE_OPTIONS}
+          onChange={(value) => dispatch({ type: 'setModuleShape', value })}
+        />
+        <Segmented
+          label="Cantos"
+          value={design.eyeShape}
+          options={EYE_SHAPE_OPTIONS}
+          onChange={(value) => dispatch({ type: 'setEyeShape', value })}
+        />
+        <p className="field__hint">Cada combinação foi testada contra um leitor de QR de verdade antes de entrar aqui.</p>
       </Section>
 
       <LogoSection />

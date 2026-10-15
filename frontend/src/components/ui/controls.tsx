@@ -121,6 +121,24 @@ export function ColorField(props: { label: string; value: string; onChange: (val
   )
 }
 
+/** Liga/desliga: checkbox nativo com cara de chave (role="switch"). */
+export function Toggle(props: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
+  return (
+    <label className="toggle">
+      <input
+        type="checkbox"
+        role="switch"
+        checked={props.checked}
+        onChange={(event) => props.onChange(event.target.checked)}
+      />
+      <span className="toggle__track" aria-hidden>
+        <span className="toggle__thumb" />
+      </span>
+      <span className="toggle__label">{props.label}</span>
+    </label>
+  )
+}
+
 export function Section(props: { id: string; title: string; children: ReactNode; aside?: ReactNode }) {
   return (
     <section className="panel-section" id={`secao-${props.id}`} aria-labelledby={`titulo-${props.id}`}>

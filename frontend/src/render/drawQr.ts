@@ -1,4 +1,14 @@
-import type { EngineeringResponse, LogoBox } from '../api/types'
+import type { EngineeringResponse, EyeShape, GradientRequest, LogoBox, ModuleShape } from '../api/types'
+import {
+  addModuleShape,
+  EYE_CENTER_CORNER,
+  EYE_HOLE_CORNER,
+  EYE_OUTER_CORNER,
+  eyes,
+  linearGradientLine,
+  quietZoneOf,
+  radialGradientRadius,
+} from './geometry'
 import type { Module, ModuleType } from './matrix'
 
 export type XrayMode = 'off' | 'types' | 'blocks'
@@ -7,6 +17,10 @@ export interface DrawParams {
   modules: Module[][]
   darkColor: string
   lightColor: string
+  /** Só no modo normal: o raio-X mostra a estrutura, sempre em módulos quadrados. */
+  moduleShape?: ModuleShape
+  eyeShape?: EyeShape
+  gradient?: GradientRequest | null
   logoBox: LogoBox | null
   logoImage: CanvasImageSource | null
   /** Pixels por módulo no canvas (inteiro: módulo fracionário borra a borda). */
@@ -69,6 +83,12 @@ export function drawQr(ctx: CanvasRenderingContext2D, p: DrawParams): void {
   ctx.fillStyle = p.lightColor
   ctx.fillRect(0, 0, side, side)
 
+  if (p.xray === 'off') {
+    drawStyled(ctx, p)
+    if (p.logoBox) drawLogo(ctx, p, p.logoBox)
+    return
+  }
+
   const destroyed = p.engineering ? new Set(p.engineering.destroyedCodewords) : new Set<number>()
 
   for (let row = 0; row < n; row++) {
@@ -85,9 +105,70 @@ export function drawQr(ctx: CanvasRenderingContext2D, p: DrawParams): void {
   if (p.logoBox) drawLogo(ctx, p, p.logoBox)
 }
 
-function moduleFill(p: DrawParams, module: Module, row: number, column: number, destroyed: Set<number>): string | null {
-  if (p.xray === 'off') return module.dark ? p.darkColor : null
+/**
+ * O QR como vai ser exportado: módulos na forma escolhida, os três olhos
+ * desenhados inteiros (moldura com furo + miolo) e o degradê, com as
+ * medidas de geometry.ts — as mesmas do PNG e do SVG do servidor.
+ */
+function drawStyled(ctx: CanvasRenderingContext2D, p: DrawParams): void {
+  const n = p.modules.length
+  const px = p.modulePx
+  const moduleShape = p.moduleShape ?? 'SQUARE'
+  const eyeShape = p.eyeShape ?? 'SQUARE'
+  const quietZone = quietZoneOf(p.modules)
 
+  ctx.fillStyle = darkPaint(ctx, p, n, quietZone)
+  ctx.beginPath()
+  for (let row = 0; row < n; row++) {
+    for (let column = 0; column < n; column++) {
+      const module = p.modules[row][column]
+      // Os finders saem inteiros como olhos, logo abaixo.
+      if (module.dark && module.type !== 'finder') addModuleShape(ctx, moduleShape, column, row, px)
+    }
+  }
+  ctx.fill()
+
+  ctx.beginPath()
+  for (const eye of eyes(n, quietZone)) {
+    const x = eye.left * px
+    const y = eye.top * px
+    addEyePart(ctx, eyeShape, x, y, 7 * px, EYE_OUTER_CORNER * px)
+    addEyePart(ctx, eyeShape, x + px, y + px, 5 * px, EYE_HOLE_CORNER * px)
+    addEyePart(ctx, eyeShape, x + 2 * px, y + 2 * px, 3 * px, EYE_CENTER_CORNER * px)
+  }
+  // evenodd: a moldura de 7 menos o furo de 5, e o miolo de 3 de volta.
+  ctx.fill('evenodd')
+}
+
+function addEyePart(ctx: CanvasRenderingContext2D, shape: EyeShape, x: number, y: number, size: number, corner: number) {
+  if (shape === 'CIRCLE') {
+    ctx.moveTo(x + size, y + size / 2)
+    ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2)
+  } else if (shape === 'ROUNDED') {
+    ctx.roundRect(x, y, size, size, corner)
+  } else {
+    ctx.rect(x, y, size, size)
+  }
+}
+
+function darkPaint(ctx: CanvasRenderingContext2D, p: DrawParams, n: number, quietZone: number): string | CanvasGradient {
+  const gradient = p.gradient
+  if (!gradient) return p.darkColor
+  const px = p.modulePx
+  let paint: CanvasGradient
+  if (gradient.type === 'RADIAL') {
+    const center = (n / 2) * px
+    paint = ctx.createRadialGradient(center, center, 0, center, center, radialGradientRadius(n, quietZone) * px)
+  } else {
+    const line = linearGradientLine(n, quietZone, gradient.angleDegrees)
+    paint = ctx.createLinearGradient(line.x1 * px, line.y1 * px, line.x2 * px, line.y2 * px)
+  }
+  paint.addColorStop(0, p.darkColor)
+  paint.addColorStop(1, gradient.endColor)
+  return paint
+}
+
+function moduleFill(p: DrawParams, module: Module, row: number, column: number, destroyed: Set<number>): string | null {
   if (p.xray === 'types') {
     const tint = TYPE_COLORS[module.type]
     if (tint) return module.dark ? tint : `${tint}40`

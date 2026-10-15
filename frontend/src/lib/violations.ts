@@ -1,10 +1,11 @@
 import type { Violation } from '../api/types'
 
-export type SectionId = 'conteudo' | 'cores' | 'logo' | 'margem' | 'correcao'
+export type SectionId = 'conteudo' | 'cores' | 'forma' | 'logo' | 'margem' | 'correcao'
 
 export const SECTION_LABELS: Record<SectionId, string> = {
   conteudo: 'Conteúdo',
   cores: 'Cores',
+  forma: 'Forma',
   logo: 'Logo',
   margem: 'Margem',
   correcao: 'Correção de erro',
