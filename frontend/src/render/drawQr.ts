@@ -50,8 +50,8 @@ export function moduleAt(x: number, y: number, modulePx: number, matrixSize: num
 // Cores do raio-X por tipo: os padrões fixos que o leitor usa antes de ler
 // dado. Dados ficam sem tinta, pra o olho ver o que é estrutura.
 export const TYPE_COLORS: Partial<Record<ModuleType, string>> = {
-  finder: '#7C3AED',
-  separator: '#C4B5FD',
+  finder: '#B07F00',
+  separator: '#E9D49B',
   alignment: '#2563EB',
   timing: '#0D9488',
   format: '#D97706',

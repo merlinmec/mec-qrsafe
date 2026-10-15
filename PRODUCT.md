@@ -45,7 +45,9 @@ Os geradores do mercado (QRCode Monkey, QR.io, QRCodeChimp, Adobe Express, qr-co
 
 Nome: mec-qrsafe (prefixo "mec" usado nos projetos do autor: fin-mec, mec-lineup). Sem logo, paleta ou voz definidos.
 
-Visual do editor (escolha do usuário em 2026-10-14, depois de ver direções mais autorais): o padrão da categoria, executado com capricho — opções numa coluna, QR grande ao lado, validação e exportar junto do QR. A régua de acabamento são QRCode Monkey, QRCodeChimp e Adobe Express (gerador de QR). O diferencial aparece no conteúdo (a conta por bloco, o raio-X da matriz), não numa estética fora do comum.
+Visual do editor (escolhas do usuário em 2026-10-14):
+- Layout: o padrão da categoria — opções numa coluna, QR grande ao lado, validação e exportar junto do QR (régua: QRCode Monkey, QRCodeChimp, Adobe Express). O diferencial aparece no conteúdo (a conta por bloco, o raio-X da matriz).
+- Mundo visual: laca e ouro, o estilo da página de escolha de estilo que o usuário viu no navegador e preferiu ao visual claro/violeta da primeira versão, que achou "muito IA". Fundo de laca escura, ouro como cor de ação, títulos em Alumni Sans fina, rótulos em mono maiúsculo espaçado. Compromisso firme: não voltar ao tema claro genérico.
 
 ## Evidence on Hand
 

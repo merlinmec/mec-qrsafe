@@ -12,7 +12,9 @@ pronta tipo ZXing).
 depois de um tempo parado, leva cerca de um minuto pra acordar; como ela
 funciona em [`docs/DEMO.md`](docs/DEMO.md)).
 
-![Editor do mec-qrsafe com o raio-X por bloco: os codewords do bloco 2 acesos e, em vermelho, os que o logo destrói](docs/editor.png)
+![Editor do mec-qrsafe com um QR em pontos, cantos em círculo e degradê, validado ao vivo](docs/estilos.png)
+
+![Raio-X por bloco: os codewords do bloco 2 acesos e, em vermelho, os que o logo destrói; ao lado, a correção de erro bloco a bloco](docs/editor.png)
 
 Antes de mexer no código, leia o **`DECISOES-E-TRADEOFFS.txt`**:
 arquitetura completa (módulos, API, regras de negócio) e por que cada
