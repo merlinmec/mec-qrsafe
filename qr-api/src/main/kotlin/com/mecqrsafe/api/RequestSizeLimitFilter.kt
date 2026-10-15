@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 
@@ -22,6 +23,7 @@ import org.springframework.web.filter.OncePerRequestFilter
  * front, curl) sempre mandam o cabeçalho.
  */
 @Component
+@Order(2)
 class RequestSizeLimitFilter(
     @param:Value("\${mecqrsafe.max-request-bytes:2097152}") private val maxBytes: Long,
 ) : OncePerRequestFilter() {
