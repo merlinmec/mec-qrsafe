@@ -13,6 +13,17 @@ export interface LogoRequest {
   imageDataUrl?: string
 }
 
+export type ModuleShape = 'SQUARE' | 'ROUNDED' | 'DOTS'
+export type EyeShape = 'SQUARE' | 'ROUNDED' | 'CIRCLE'
+export type GradientType = 'LINEAR' | 'RADIAL'
+
+export interface GradientRequest {
+  type: GradientType
+  endColor: string
+  /** Só no linear: 0 = da esquerda pra direita, 90 = de cima pra baixo. */
+  angleDegrees: number
+}
+
 export interface QrRequest {
   content: { type: 'STATIC'; value: string }
   style: {
@@ -20,6 +31,9 @@ export interface QrRequest {
     lightColor: string
     logo?: LogoRequest
     quietZoneModules: number
+    moduleShape: ModuleShape
+    eyeShape: EyeShape
+    gradient?: GradientRequest
   }
   errorCorrection: ErrorCorrection
 }

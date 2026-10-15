@@ -1,4 +1,4 @@
-import type { ErrorCorrection, QrRequest } from '../api/types'
+import type { ErrorCorrection, EyeShape, GradientType, ModuleShape, QrRequest } from '../api/types'
 
 export interface LogoDesign {
   /** data URL da imagem (PNG ou JPEG) — desenhada no canvas e enviada só no export. */
@@ -9,6 +9,12 @@ export interface LogoDesign {
   centerYPercent: number
 }
 
+export interface GradientDesign {
+  type: GradientType
+  endColor: string
+  angleDegrees: number
+}
+
 export interface QrDesign {
   content: string
   darkColor: string
@@ -16,6 +22,11 @@ export interface QrDesign {
   logo: LogoDesign | null
   quietZoneModules: number
   errorCorrection: ErrorCorrection
+  moduleShape: ModuleShape
+  eyeShape: EyeShape
+  /** Desligar o degradê guarda a escolha: religar volta com a mesma cor e ângulo. */
+  gradientEnabled: boolean
+  gradient: GradientDesign
 }
 
 export const DEFAULT_LOGO_WIDTH = 20
@@ -27,6 +38,10 @@ export const initialDesign: QrDesign = {
   logo: null,
   quietZoneModules: 4,
   errorCorrection: 'AUTO',
+  moduleShape: 'SQUARE',
+  eyeShape: 'SQUARE',
+  gradientEnabled: false,
+  gradient: { type: 'LINEAR', endColor: '#6D28D9', angleDegrees: 45 },
 }
 
 export type DesignAction =
@@ -40,6 +55,10 @@ export type DesignAction =
   | { type: 'removeLogo' }
   | { type: 'setQuietZone'; value: number }
   | { type: 'setErrorCorrection'; value: ErrorCorrection }
+  | { type: 'setModuleShape'; value: ModuleShape }
+  | { type: 'setEyeShape'; value: EyeShape }
+  | { type: 'setGradientEnabled'; value: boolean }
+  | { type: 'setGradient'; value: Partial<GradientDesign> }
 
 const clampPercent = (value: number) => Math.min(100, Math.max(0, value))
 
@@ -84,6 +103,14 @@ export function designReducer(state: QrDesign, action: DesignAction): QrDesign {
       return { ...state, quietZoneModules: action.value }
     case 'setErrorCorrection':
       return { ...state, errorCorrection: action.value }
+    case 'setModuleShape':
+      return { ...state, moduleShape: action.value }
+    case 'setEyeShape':
+      return { ...state, eyeShape: action.value }
+    case 'setGradientEnabled':
+      return { ...state, gradientEnabled: action.value }
+    case 'setGradient':
+      return { ...state, gradient: { ...state.gradient, ...action.value } }
   }
 }
 
@@ -111,6 +138,9 @@ export function toRequest(design: QrDesign, withLogoImage = false): QrRequest {
       darkColor: design.darkColor,
       lightColor: design.lightColor,
       quietZoneModules: design.quietZoneModules,
+      moduleShape: design.moduleShape,
+      eyeShape: design.eyeShape,
+      ...(design.gradientEnabled && { gradient: { ...design.gradient } }),
       ...(logo && {
         logo: {
           widthPercent: logo.widthPercent,

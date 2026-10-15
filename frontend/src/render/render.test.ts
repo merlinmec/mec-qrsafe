@@ -55,10 +55,35 @@ describe('cores dos blocos', () => {
 /** Contexto 2D falso que guarda a cor de cada fillRect. */
 function recorder() {
   const fills: { style: string; x: number; y: number }[] = []
+  const shapes: { kind: string; args: number[] }[] = []
+  const pathFills: { style: unknown; rule?: string; shapes: { kind: string; args: number[] }[] }[] = []
+  let current: { kind: string; args: number[] }[] = []
+  const gradients: { kind: string; args: number[]; stops: [number, string][] }[] = []
   const ctx = {
-    fillStyle: '',
+    fillStyle: '' as unknown,
     fillRect(x: number, y: number) {
       fills.push({ style: String(this.fillStyle), x, y })
+    },
+    beginPath() {
+      current = []
+    },
+    rect: (...args: number[]) => current.push({ kind: 'rect', args }),
+    roundRect: (...args: number[]) => current.push({ kind: 'roundRect', args }),
+    arc: (...args: number[]) => current.push({ kind: 'arc', args }),
+    moveTo() {},
+    fill(rule?: string) {
+      pathFills.push({ style: this.fillStyle, rule, shapes: current })
+      shapes.push(...current)
+    },
+    createLinearGradient(...args: number[]) {
+      const gradient = { kind: 'linear', args, stops: [] as [number, string][], addColorStop: (o: number, c: string) => gradient.stops.push([o, c]) }
+      gradients.push(gradient)
+      return gradient
+    },
+    createRadialGradient(...args: number[]) {
+      const gradient = { kind: 'radial', args, stops: [] as [number, string][], addColorStop: (o: number, c: string) => gradient.stops.push([o, c]) }
+      gradients.push(gradient)
+      return gradient
     },
     save() {},
     restore() {},
@@ -66,7 +91,23 @@ function recorder() {
     strokeRect() {},
     drawImage() {},
   }
-  return { ctx: ctx as unknown as CanvasRenderingContext2D, fills }
+  return { ctx: ctx as unknown as CanvasRenderingContext2D, fills, pathFills, gradients }
+}
+
+/**
+ * Matriz sintética 15x15, sem margem: os três finders de 7x7 nos cantos
+ * (escuros, para o teste só contar posição) e três módulos de dado
+ * escuros no canto de baixo-direita.
+ */
+function fakeSymbol() {
+  const rows = Array.from({ length: 15 }, (_, row) =>
+    Array.from({ length: 15 }, (_, column) => {
+      const inFinder = (row < 7 && column < 7) || (row < 7 && column >= 8) || (row >= 8 && column < 7)
+      if (inFinder) return 'F'
+      return row >= 12 && column >= 12 && (row + column) % 2 === 0 ? 'D' : 'd'
+    }).join(''),
+  )
+  return parseMatrix({ size: 15, quietZone: 0, rows })
 }
 
 describe('drawQr', () => {
@@ -96,14 +137,55 @@ describe('drawQr', () => {
     highlightBlock: null,
   }
 
-  it('no modo normal pinta o fundo e só os módulos escuros, na cor escolhida', () => {
-    const { ctx, fills } = recorder()
-    drawQr(ctx, { ...base, xray: 'off' })
+  const styled = { ...base, modules: fakeSymbol(), engineering: null }
+  const darkDataModules = 5 // (12,12), (12,14), (13,13), (14,12), (14,14)
+
+  it('no modo normal: fundo claro, um caminho com os módulos de dado e outro com os três olhos', () => {
+    const { ctx, fills, pathFills } = recorder()
+    drawQr(ctx, { ...styled, xray: 'off' })
+
     expect(fills[0]).toMatchObject({ style: '#FFFFFF' })
-    expect(fills.slice(1).map((f) => [f.x, f.y, f.style])).toEqual([
-      [0, 0, '#123456'],
-      [0, 10, '#123456'],
+    const [modulesPath, eyesPath] = pathFills
+    expect(modulesPath.style).toBe('#123456')
+    expect(modulesPath.shapes.map((s) => [s.kind, s.args[0], s.args[1]])).toContainEqual(['rect', 120, 120])
+    expect(modulesPath.shapes).toHaveLength(darkDataModules)
+    expect(eyesPath.rule).toBe('evenodd')
+    expect(eyesPath.shapes).toHaveLength(3 * 3) // moldura, furo e miolo de cada olho
+  })
+
+  it('pontos têm o diâmetro do export (0,9 do módulo) e olhos em círculo viram arcos', () => {
+    const { ctx, pathFills } = recorder()
+    drawQr(ctx, { ...styled, xray: 'off', moduleShape: 'DOTS', eyeShape: 'CIRCLE' })
+
+    const [modulesPath, eyesPath] = pathFills
+    expect(modulesPath.shapes.every((s) => s.kind === 'arc' && s.args[2] === 4.5)).toBe(true)
+    // Olho de cima-esquerda: centro em (35, 35), raios 35, 25 e 15 (7, 5 e 3 módulos).
+    expect(eyesPath.shapes.slice(0, 3).map((s) => s.args.slice(0, 3))).toEqual([
+      [35, 35, 35],
+      [35, 35, 25],
+      [35, 35, 15],
     ])
+  })
+
+  it('degradê linear atravessa o símbolo na direção do ângulo e pinta módulos e olhos', () => {
+    const { ctx, pathFills, gradients } = recorder()
+    drawQr(ctx, { ...styled, xray: 'off', gradient: { type: 'LINEAR', endColor: '#6D28D9', angleDegrees: 0 } })
+
+    const [gradient] = gradients
+    expect(gradient.args).toEqual([0, 75, 150, 75]) // 0° = da borda esquerda à direita, na altura do meio
+    expect(gradient.stops).toEqual([
+      [0, '#123456'],
+      [1, '#6D28D9'],
+    ])
+    expect(pathFills.every((p) => p.style === gradient)).toBe(true)
+  })
+
+  it('o raio-X desenha a estrutura em módulos quadrados, sem forma nem degradê', () => {
+    const { ctx, pathFills, gradients } = recorder()
+    drawQr(ctx, { ...base, xray: 'types', moduleShape: 'DOTS', gradient: { type: 'RADIAL', endColor: '#6D28D9', angleDegrees: 0 } })
+
+    expect(pathFills).toHaveLength(0)
+    expect(gradients).toHaveLength(0)
   })
 
   it('no raio-X de blocos o codeword destruído sai em vermelho', () => {
@@ -114,7 +196,7 @@ describe('drawQr', () => {
 
   it('a placa do logo é desenhada na cor clara', () => {
     const { ctx, fills } = recorder()
-    drawQr(ctx, { ...base, xray: 'off', logoBox: { left: 0.5, top: 0.5, side: 1 } })
+    drawQr(ctx, { ...styled, xray: 'off', logoBox: { left: 0.5, top: 0.5, side: 1 } })
     expect(fills.at(-1)).toMatchObject({ style: '#FFFFFF', x: 5, y: 5 })
   })
 })

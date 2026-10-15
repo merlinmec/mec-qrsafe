@@ -298,6 +298,58 @@
   flex: none;
 }
 
+/* Liga/desliga. */
+.toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.toggle__track {
+  position: relative;
+  width: 30px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--border-strong);
+  transition: background 160ms var(--ease-out);
+}
+
+.toggle__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  transition: transform 160ms var(--ease-out);
+}
+
+.toggle input:checked + .toggle__track {
+  background: var(--accent);
+}
+
+.toggle input:checked + .toggle__track .toggle__thumb {
+  transform: translateX(12px);
+}
+
+.toggle input:focus-visible + .toggle__track {
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+
 /* Seções do painel. */
 .panel-section {
   display: grid;
