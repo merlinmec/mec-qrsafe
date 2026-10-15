@@ -35,6 +35,12 @@ describe('ScannabilityIndicator', () => {
     render(<ScannabilityIndicator validation={null} status="error" error="A API não respondeu." onGoToSection={() => {}} />)
     expect(screen.getByText('Não foi possível conferir')).toBeInTheDocument()
   })
+
+  it('com o servidor da demo acordando, explica a espera em vez de só "conferindo"', () => {
+    render(<ScannabilityIndicator validation={null} status="checking" error={null} wakingSeconds={65} onGoToSection={() => {}} />)
+    expect(screen.getByText('Acordando o servidor… 1:05')).toBeInTheDocument()
+    expect(screen.getByText(/a validação começa sozinha/)).toBeInTheDocument()
+  })
 })
 
 describe('ExportBar', () => {

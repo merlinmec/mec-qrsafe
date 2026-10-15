@@ -6,9 +6,15 @@ nada (gera → valida → exporta), então não há dado de visitante para isola
 
 ## Como funciona
 
-- **Um serviço só**: o `Dockerfile` da raiz faz o build do editor com o Vite e põe o resultado em
-  `classpath:/static` do `qr-api`; a API serve o editor na raiz e a API em `/api/v1/...`. Na
-  hospedagem gratuita, dois serviços seriam dois servidores dormindo e acordando.
+- **Editor estático + API**: o `render.yaml` cria dois serviços. O editor
+  (`mec-qrsafe-editor`) é um site estático, que no plano gratuito não dorme nem conta nas horas do
+  workspace; ele chama a API (`mec-qrsafe`) pela origem configurada em `VITE_API_ORIGIN`, e a API
+  libera essa origem por CORS (`MECQRSAFE_CORS_ALLOWED_ORIGINS`, desligado por padrão). A imagem
+  Docker continua servindo o editor na mesma origem da API, então o endereço antigo segue
+  funcionando.
+- **Servidor acordando**: ao abrir, o editor bate em `/api/v1/health` a cada 2 s e só começa a
+  validar quando a API responde. Se ela não responder em 1,5 s, mostra "Acordando o servidor…"
+  com o tempo decorrido, em vez de uma requisição pendurada por um minuto ou de um erro.
 - **Limite por IP** (`RateLimitFilter`): 120 requisições por minuto na API e 10 exportações por
   minuto. Desligado fora da demo; o `render.yaml` liga. O IP vem do `CF-Connecting-IP`: o Render
   fica atrás da Cloudflare, que põe ali o IP real e sobrescreve o que o visitante mandar. A
@@ -27,7 +33,8 @@ exportar um PNG de 4096 px (que leva ~5 s nessa CPU).
 ## Passo a passo
 
 1. Em https://render.com: **New → Blueprint**, escolha o repositório `mec-qrsafe`. O Render lê o
-   `render.yaml` da raiz; não há segredo para colar.
+   `render.yaml` da raiz e cria os dois serviços; não há segredo para colar. (Num Blueprint que já
+   existia com um serviço só, sincronize o Blueprint para o site do editor ser criado.)
 2. Espere o primeiro deploy (o build do Docker leva alguns minutos) e abra o endereço que ele mostrar.
 
 Depois disso, todo merge no `master` publica a demo sozinho (`autoDeploy`).
@@ -37,5 +44,5 @@ Depois disso, todo merge no `master` publica a demo sozinho (`autoDeploy`).
 O plano gratuito dorme após 15 minutos sem acesso; acordar leva cerca de 1 minuto. As 750 horas
 gratuitas por mês são **por workspace**, e o fin-mec e o Árvore já usam as delas com o ping em
 horário comercial (cerca de 265 h cada). Um terceiro ping estouraria a cota e o Render suspenderia
-os três. Por isso a demo do mec-qrsafe fica sem ping: quem abre o link depois de um tempo parado
-espera o servidor acordar.
+os três. Por isso a demo do mec-qrsafe fica sem ping. Em vez disso, o editor saiu do servidor que
+dorme: quem abre o link vê o editor na hora e espera só a validação, com o aviso na tela.

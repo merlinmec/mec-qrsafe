@@ -8,9 +8,10 @@ legível por câmera — e recusa deixar exportar o que não passar. Usa um
 encoder QR implementado do zero (Reed-Solomon sobre GF(256), sem lib
 pronta tipo ZXing).
 
-**Demo pública: https://mec-qrsafe.onrender.com** (servidor gratuito:
-depois de um tempo parado, leva cerca de um minuto pra acordar; como ela
-funciona em [`docs/DEMO.md`](docs/DEMO.md)).
+**Demo pública: https://mec-qrsafe-editor.onrender.com** (o editor abre na
+hora; a API roda num servidor gratuito que dorme e, se estiver parada, leva
+cerca de um minuto pra acordar — o editor avisa e começa a validar sozinho.
+Como funciona em [`docs/DEMO.md`](docs/DEMO.md)).
 
 ![Editor do mec-qrsafe com um QR em pontos, cantos em círculo e degradê, validado ao vivo](docs/estilos.png)
 

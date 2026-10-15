@@ -33,11 +33,14 @@ interface Settled {
  * mudança na matriz (conteúdo, logo, margem, nível) pede /preview; só cor
  * pede /validate, mais leve, e o canvas repinta local.
  *
+ * Com `serverReady` falso (a API da demo ainda acordando, useServerWake),
+ * nada é pedido e o status fica "conferindo"; começa sozinho quando vira true.
+ *
  * O status não é guardado: "conferindo" é derivado na renderização — o
  * design atual ainda não é o da última resposta. O efeito só escreve
  * estado quando uma resposta chega.
  */
-export function useScannabilityValidation(design: QrDesign): ScannabilityState {
+export function useScannabilityValidation(design: QrDesign, serverReady = true): ScannabilityState {
   const [preview, setPreview] = useState<PreviewResponse | null>(null)
   const [previewKey, setPreviewKey] = useState<string | null>(null)
   const [validation, setValidation] = useState<ValidationResponse | null>(null)
@@ -53,7 +56,7 @@ export function useScannabilityValidation(design: QrDesign): ScannabilityState {
 
   useEffect(() => {
     controller.current?.abort()
-    if (contentMissing) return
+    if (contentMissing || !serverReady) return
     const timer = window.setTimeout(async () => {
       const current = new AbortController()
       controller.current = current
@@ -75,7 +78,7 @@ export function useScannabilityValidation(design: QrDesign): ScannabilityState {
       }
     }, DEBOUNCE_MS)
     return () => window.clearTimeout(timer)
-  }, [design, key, contentMissing, attempt])
+  }, [design, key, contentMissing, attempt, serverReady])
 
   useEffect(() => () => controller.current?.abort(), [])
 
