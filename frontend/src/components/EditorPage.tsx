@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useQrDesign } from '../design/useQrDesign'
 import { useScannabilityValidation } from '../hooks/useScannabilityValidation'
+import { useServerWake } from '../hooks/useServerWake'
 import type { SectionId } from '../lib/violations'
 import type { XrayMode } from '../render/drawQr'
 import { CustomizationPanel } from './CustomizationPanel'
@@ -12,7 +13,8 @@ import './EditorPage.css'
 
 export function EditorPage() {
   const { design } = useQrDesign()
-  const { preview, validation, status, error, stale, retry } = useScannabilityValidation(design)
+  const server = useServerWake()
+  const { preview, validation, status, error, stale, retry } = useScannabilityValidation(design, server.ready)
   const [xray, setXray] = useState<XrayMode>('off')
   const [highlightBlock, setHighlightBlock] = useState<number | null>(null)
 
@@ -60,7 +62,13 @@ export function EditorPage() {
             highlightBlock={highlightBlock}
           />
           <div className="workspace__checks">
-            <ScannabilityIndicator validation={validation} status={status} error={error} onGoToSection={goToSection} />
+            <ScannabilityIndicator
+              validation={validation}
+              status={status}
+              error={error}
+              wakingSeconds={server.wakingSeconds}
+              onGoToSection={goToSection}
+            />
             <ExportBar validation={validation} status={status} />
           </div>
         </section>

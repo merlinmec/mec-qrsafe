@@ -48,6 +48,20 @@ async function settle() {
 }
 
 describe('useScannabilityValidation', () => {
+  it('não pede nada enquanto o servidor não acorda, e começa sozinho quando ele responde', async () => {
+    const { result, rerender } = renderHook(({ ready }) => useScannabilityValidation(initialDesign, ready), {
+      initialProps: { ready: false },
+    })
+    await settle()
+    expect(calls).toEqual([])
+    expect(result.current.status).toBe('checking')
+
+    rerender({ ready: true })
+    await settle()
+    expect(calls.map((c) => c.path)).toEqual(['/api/v1/qr-codes/preview'])
+    expect(result.current.status).toBe('ready')
+  })
+
   it('primeira carga pede /preview e não pede /validate de sobra depois', async () => {
     const { result } = renderHook(({ design }) => useScannabilityValidation(design), { initialProps: { design: initialDesign } })
     await settle()

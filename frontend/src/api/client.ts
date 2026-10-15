@@ -1,6 +1,9 @@
 import type { ApiErrorBody, PreviewResponse, QrRequest, ValidationResponse } from './types'
 
-const BASE = '/api/v1/qr-codes'
+// Vazio = mesma origem (Vite em dev, imagem Docker). Na demo, o editor é um
+// site estático que não dorme e chama a API pelo endereço dela (docs/DEMO.md).
+const API_ORIGIN = import.meta.env.VITE_API_ORIGIN ?? ''
+const BASE = `${API_ORIGIN}/api/v1/qr-codes`
 
 /** Erro com a resposta da API, quando houve uma (400, 422...). */
 export class ApiError extends Error {
@@ -26,7 +29,7 @@ async function post(path: string, body: QrRequest, signal?: AbortSignal): Promis
     })
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') throw error
-    throw new ApiError(0, 'A API não respondeu. Ela está rodando na porta 8080?')
+    throw new ApiError(0, API_ORIGIN ? 'A API não respondeu.' : 'A API não respondeu. Ela está rodando na porta 8080?')
   }
   if (!response.ok) {
     const parsed = (await response.json().catch(() => undefined)) as ApiErrorBody | undefined
@@ -48,4 +51,16 @@ export type ExportFormat = 'png' | 'svg'
 export async function fetchExport(body: QrRequest, format: ExportFormat, size: number): Promise<Blob> {
   const response = await post(`/export?format=${format}&size=${size}`, body)
   return response.blob()
+}
+
+/** O servidor já subiu? Responde rápido e não codifica nada (HealthController). */
+export async function isApiUp(signal?: AbortSignal): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_ORIGIN}/api/v1/health`, { signal })
+    if (!response.ok) return false
+    const body = (await response.json()) as { status?: string }
+    return body.status === 'ok'
+  } catch {
+    return false
+  }
 }

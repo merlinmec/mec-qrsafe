@@ -14,9 +14,11 @@ export function ScannabilityIndicator(props: {
   validation: ValidationResponse | null
   status: ValidationStatus
   error: string | null
+  /** Segundos esperando o servidor da demo acordar (useServerWake); null se ele já respondeu. */
+  wakingSeconds?: number | null
   onGoToSection: (section: SectionId) => void
 }) {
-  const { validation, status, error, onGoToSection } = props
+  const { validation, status, error, wakingSeconds = null, onGoToSection } = props
 
   if (status === 'error' && error) {
     return (
@@ -25,6 +27,21 @@ export function ScannabilityIndicator(props: {
         <div className="verdict__text">
           <strong>Não foi possível conferir</strong>
           <span>{error}</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (!validation && wakingSeconds !== null) {
+    return (
+      <div className="verdict verdict--checking" role="status">
+        <LoaderCircle size={20} aria-hidden className="verdict__icon spin" />
+        <div className="verdict__text">
+          <strong>Acordando o servidor… {formatElapsed(wakingSeconds)}</strong>
+          <span>
+            A demo roda num plano gratuito que dorme depois de 15 minutos parado e leva cerca de um minuto para voltar.
+            Pode ir ajustando: a validação começa sozinha.
+          </span>
         </div>
       </div>
     )
@@ -80,4 +97,8 @@ export function ScannabilityIndicator(props: {
       )}
     </div>
   )
+}
+
+function formatElapsed(seconds: number): string {
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
 }
