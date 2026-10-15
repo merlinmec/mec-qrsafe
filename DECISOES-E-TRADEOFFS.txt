@@ -684,3 +684,15 @@ continua em módulos quadrados: ele mostra a estrutura, não a aparência.
 
 Forma e degradê são cosméticos para a matriz: mudam só o /validate
 (contraste) e o export, nunca pedem um /preview novo.
+
+
+19. VISUAL DO EDITOR REVISTO: LACA E OURO (2026-10-14)
+--------------------------------------------------------
+O usuário achou o primeiro visual (claro, violeta, padrão de gerador SaaS)
+"muito IA" e preferiu o estilo da página de escolha de estilo que viu no
+navegador. O layout ficou (controles | QR | inspeção); mudaram os
+materiais: fundo de laca, grafite, ouro como única cor de ação, pátina /
+laranja / vermelhão só para o estado da validação, Alumni Sans finíssima
+nos títulos, Albert Sans no texto e rótulos em mono maiúsculo espaçado.
+O QR continua nas cores do usuário, como papel sobre a laca — o tema nunca
+tinge o QR. Detalhes em DESIGN.md; a escolha está registrada em PRODUCT.md.
