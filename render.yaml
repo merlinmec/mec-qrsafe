@@ -1,0 +1,31 @@
+# Demonstração pública do mec-qrsafe no Render (plano gratuito). Passo a passo em docs/DEMO.md.
+# Sem banco e sem segredos: o app não guarda nada (gera, valida e exporta).
+services:
+  - type: web
+    name: mec-qrsafe
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    branch: master
+    autoDeploy: true # o master só recebe código com a CI verde
+    healthCheckPath: /api/v1/health
+    envVars:
+      # O Render encaminha o tráfego para a porta desta variável; a aplicação escuta na 8080.
+      - key: PORT
+        value: "8080"
+      # O plano gratuito tem 512 MB de RAM: heap limitado e GC serial (menos memória e threads).
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:MaxRAMPercentage=65 -XX:+UseSerialGC -Xss512k -XX:+ExitOnOutOfMemoryError
+      # O IP do visitante vem no X-Forwarded-For do proxy do Render (limite por IP).
+      - key: SERVER_FORWARD_HEADERS_STRATEGY
+        value: native
+      # Limite por IP: o editor faz uma requisição a cada pausa de digitação, então o teto geral é
+      # folgado; o export (que desenha PNGs de até 4096 px) tem um teto bem menor.
+      - key: MECQRSAFE_RATE_LIMIT_REQUESTS_PER_MINUTE
+        value: "120"
+      - key: MECQRSAFE_RATE_LIMIT_EXPORTS_PER_MINUTE
+        value: "10"
+      - key: LOGGING_LEVEL_COM_MECQRSAFE
+        value: INFO
