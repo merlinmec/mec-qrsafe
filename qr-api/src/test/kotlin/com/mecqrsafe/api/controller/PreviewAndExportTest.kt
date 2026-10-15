@@ -204,6 +204,37 @@ class PreviewAndExportTest {
     }
 
     @Test
+    fun `export com pontos, olhos em circulo e degrade radial le no leitor real`() {
+        val style = """, "moduleShape": "DOTS", "eyeShape": "CIRCLE", "gradient": { "type": "RADIAL", "endColor": "#6D28D9" },""" +
+            """ "logo": { "widthPercent": 20, "imageDataUrl": "${logoDataUrl()}" }"""
+        val png = post("/api/v1/qr-codes/export?format=png&size=800", body(style)).andExpect {
+            status { isOk() }
+        }.andReturn().response.contentAsByteArray
+
+        assertEquals(url, read(png))
+    }
+
+    @Test
+    fun `degrade que termina claro demais reprova pelo contraste do pior ponto`() {
+        post("/api/v1/qr-codes/validate", body(""", "gradient": { "endColor": "#D0D0D0", "angleDegrees": 45 }""")).andExpect {
+            status { isOk() }
+            jsonPath("$.passed") { value(false) }
+            jsonPath("$.violations[0].rule") { value("contrast") }
+            jsonPath("$.violations[0].message") { value(containsString("degradê")) }
+        }
+    }
+
+    @Test
+    fun `forma que nao existe vira 400 dizendo o campo e os valores aceitos`() {
+        post("/api/v1/qr-codes/validate", body(""", "moduleShape": "ESTRELA"""")).andExpect {
+            status { isBadRequest() }
+            jsonPath("$.error") { value("validation_error") }
+            jsonPath("$.message") { value(containsString("style.moduleShape")) }
+            jsonPath("$.message") { value(containsString("SQUARE, ROUNDED, DOTS")) }
+        }
+    }
+
+    @Test
     fun `JSON quebrado vira 400 no formato de erro da API`() {
         post("/api/v1/qr-codes/preview", "{ isso não é json").andExpect {
             status { isBadRequest() }

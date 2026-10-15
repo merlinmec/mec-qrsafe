@@ -6,6 +6,7 @@ import com.mecqrsafe.api.dto.ValidateRequest
 import com.mecqrsafe.qrengine.ErrorCorrectionLevel
 import com.mecqrsafe.qrengine.QrCode
 import com.mecqrsafe.qrengine.QrEncoder
+import com.mecqrsafe.render.Gradient
 import com.mecqrsafe.render.LogoBox
 import com.mecqrsafe.render.LogoImage
 import com.mecqrsafe.render.PngRenderer
@@ -119,6 +120,9 @@ class QrCodeService(
             lightColor = request.style.lightColor.uppercase(),
             logoBox = result.logoFootprint?.let { LogoBox(it.left, it.top, it.side) },
             logoImage = request.style.logo?.imageDataUrl?.let { LogoImage.fromDataUrl(it) },
+            moduleShape = request.style.moduleShape,
+            eyeShape = request.style.eyeShape,
+            gradient = request.style.gradient?.let { Gradient(it.type, it.endColor.uppercase(), it.angleDegrees) },
         )
         val matrix = result.qr.matrix
         val bytes = when (format) {
@@ -133,6 +137,7 @@ class QrCodeService(
         lightModuleColor = parseHexColor(style.lightColor),
         logo = style.logo?.let { LogoStyle(it.widthPercent, it.centerXPercent, it.centerYPercent) },
         quietZoneModules = style.quietZoneModules,
+        darkGradientEnd = style.gradient?.let { parseHexColor(it.endColor) },
     )
 
     private fun parseHexColor(hex: String): Color {

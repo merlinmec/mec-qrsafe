@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.HandlerMethodValidationException
+import tools.jackson.databind.exc.InvalidFormatException
 
 data class ErrorResponse(val error: String, val message: String?)
 
@@ -43,9 +44,20 @@ class GlobalExceptionHandler {
                 ),
             )
 
+    /**
+     * JSON quebrado ou com um valor que não cabe no campo. No segundo caso a
+     * mensagem diz qual campo e, se for uma lista fechada (forma do módulo,
+     * tipo do degradê...), quais valores ele aceita.
+     */
     @ExceptionHandler(HttpMessageNotReadableException::class)
-    fun handleUnreadable(ex: HttpMessageNotReadableException): ResponseEntity<ErrorResponse> =
-        ResponseEntity.badRequest().body(ErrorResponse("bad_request", "corpo da requisição não é um JSON válido"))
+    fun handleUnreadable(ex: HttpMessageNotReadableException): ResponseEntity<ErrorResponse> {
+        val invalid = generateSequence<Throwable>(ex) { it.cause }.filterIsInstance<InvalidFormatException>().firstOrNull()
+            ?: return ResponseEntity.badRequest().body(ErrorResponse("bad_request", "corpo da requisição não é um JSON válido"))
+        val field = invalid.path.joinToString(".") { it.propertyName ?: "[${it.index}]" }
+        val accepted = invalid.targetType?.takeIf { it.isEnum }?.enumConstants?.joinToString(", ")
+        val hint = accepted?.let { " (aceitos: $it)" }.orEmpty()
+        return ResponseEntity.badRequest().body(ErrorResponse("validation_error", "$field: valor \"${invalid.value}\" não aceito$hint"))
+    }
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleBadRequest(ex: IllegalArgumentException): ResponseEntity<ErrorResponse> =
