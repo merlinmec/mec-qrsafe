@@ -33,3 +33,22 @@ services:
         value: CF-Connecting-IP
       - key: LOGGING_LEVEL_COM_MECQRSAFE
         value: INFO
+      # O editor estático (abaixo) chama a API de outra origem. A própria origem da API continua na
+      # lista porque a imagem ainda serve o editor em mec-qrsafe.onrender.com.
+      - key: MECQRSAFE_CORS_ALLOWED_ORIGINS
+        value: https://mec-qrsafe-editor.onrender.com,https://mec-qrsafe.onrender.com
+
+  # Editor como site estático: no plano gratuito, site estático não dorme nem gasta as 750 horas
+  # do workspace. Abre na hora e mostra "acordando o servidor" enquanto a API acima sobe.
+  - type: web
+    name: mec-qrsafe-editor
+    runtime: static
+    branch: master
+    autoDeploy: true
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: NODE_VERSION # o README pede Node 22.12+
+        value: "22.12.0"
+      - key: VITE_API_ORIGIN
+        value: https://mec-qrsafe.onrender.com

@@ -696,3 +696,34 @@ laranja / vermelhão só para o estado da validação, Alumni Sans finíssima
 nos títulos, Albert Sans no texto e rótulos em mono maiúsculo espaçado.
 O QR continua nas cores do usuário, como papel sobre a laca — o tema nunca
 tinge o QR. Detalhes em DESIGN.md; a escolha está registrada em PRODUCT.md.
+
+
+20. DEMO: EDITOR ESTÁTICO SEMPRE ACORDADO (2026-10-15)
+-------------------------------------------------------
+Problema: quem abria a demo depois de 15 minutos sem acesso esperava ~74 s
+(medido) olhando uma página em branco — o editor vinha do mesmo servidor
+gratuito que dorme. Ping para manter acordado está descartado (docs/DEMO.md:
+a cota de 750 h é do workspace e já é usada pelo fin-mec e pelo Árvore).
+
+Decisão: o editor virou um site estático no Render, que não dorme e não
+gasta a cota, e chama a API em outra origem. Isso revê o "um serviço só"
+da primeira versão da demo, mas não o motivo dele: o argumento era não ter
+DOIS servidores dormindo, e site estático não dorme.
+
+- Front: `VITE_API_ORIGIN` (vazio = mesma origem, então dev com o proxy do
+  Vite e a imagem Docker não mudam). `useServerWake` bate no /health até
+  ele responder `{"status":"ok"}` — um 200 qualquer não basta, a página de
+  espera do Render também é 200 — e a validação só começa depois. O aviso
+  "Acordando o servidor…" só aparece se a espera passar de 1,5 s, para não
+  piscar quando a API já está de pé.
+- API: CORS como filtro com a maior precedência, não a configuração do
+  Spring MVC, para que o 429 do limite por IP e o 413 do limite de tamanho
+  também saiam com o cabeçalho (senão o browser esconde a resposta e o
+  editor só vê "a API não respondeu"). Desligado por padrão; o render.yaml
+  liga com a origem do editor e a da própria API (que ainda serve o editor
+  no endereço antigo). O preflight é respondido pelo filtro de CORS e não
+  conta no limite por IP.
+
+Custo aceito: a primeira validação ainda espera a API acordar. O que muda
+é o que a pessoa vê nesse minuto: o editor pronto para mexer, com o motivo
+da espera escrito, em vez de uma tela em branco.
