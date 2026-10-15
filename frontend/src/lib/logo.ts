@@ -44,23 +44,23 @@ export function sampleLogoDataUrl(): string {
   canvas.width = canvas.height = 256
   const g = canvas.getContext('2d')
   if (!g) return ''
-  g.fillStyle = '#6D28D9'
+  g.fillStyle = '#E8A60C'
   g.beginPath()
   g.roundRect(8, 8, 240, 240, 56)
   g.fill()
-  // Três "olhos" de QR em branco, como os finder patterns.
+  // Três "olhos" de QR em tinta escura sobre o ouro, como os finder patterns.
   const eye = (x: number, y: number) => {
-    g.fillStyle = '#FFFFFF'
+    g.fillStyle = '#16140F'
     g.fillRect(x, y, 70, 70)
-    g.fillStyle = '#6D28D9'
+    g.fillStyle = '#E8A60C'
     g.fillRect(x + 12, y + 12, 46, 46)
-    g.fillStyle = '#FFFFFF'
+    g.fillStyle = '#16140F'
     g.fillRect(x + 22, y + 22, 26, 26)
   }
   eye(44, 44)
   eye(142, 44)
   eye(44, 142)
-  g.fillStyle = '#FFFFFF'
+  g.fillStyle = '#16140F'
   for (const [x, y] of [[142, 142], [180, 142], [161, 172], [142, 196], [190, 190]]) g.fillRect(x, y, 22, 22)
   return canvas.toDataURL('image/png')
 }

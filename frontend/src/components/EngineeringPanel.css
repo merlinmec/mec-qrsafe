@@ -14,11 +14,15 @@
   gap: var(--space-2);
 }
 
+/* O título do painel é a voz de exibição do mundo: Alumni Sans, grande e finíssima. */
 .engineering__title {
   margin: 0;
-  font-size: var(--text-lg);
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 100;
+  line-height: 1;
   letter-spacing: -0.01em;
+  color: var(--text);
 }
 
 .engineering__lede {
@@ -45,8 +49,11 @@
 }
 
 .fact dt {
-  font-size: var(--text-sm);
-  color: var(--text-2);
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-3);
 }
 
 .fact dd {
@@ -59,7 +66,8 @@
 }
 
 .fact dd strong {
-  font-weight: 600;
+  font-weight: 500;
+  color: var(--accent);
   font-variant-numeric: tabular-nums;
 }
 
@@ -84,7 +92,7 @@
 .blocks__head h3 {
   margin: 0;
   font-size: var(--text-md);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .blocks__summary {
@@ -200,7 +208,7 @@
 
 .block-row--block .block-row__count {
   color: var(--block);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .legend {

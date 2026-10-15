@@ -41,7 +41,7 @@ export const initialDesign: QrDesign = {
   moduleShape: 'SQUARE',
   eyeShape: 'SQUARE',
   gradientEnabled: false,
-  gradient: { type: 'LINEAR', endColor: '#6D28D9', angleDegrees: 45 },
+  gradient: { type: 'LINEAR', endColor: '#8A5A00', angleDegrees: 45 },
 }
 
 export type DesignAction =

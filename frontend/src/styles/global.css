@@ -21,8 +21,18 @@ body {
 }
 
 ::selection {
-  background: #ddd0fb;
-  color: var(--text);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* Rótulo do mundo: mono, maiúsculo, espaçado (rótulos de campo, metadados, selos). */
+.label {
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  font-weight: 400;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-3);
 }
 
 * {

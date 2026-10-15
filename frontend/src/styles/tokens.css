@@ -1,43 +1,63 @@
 /*
- * Tokens do editor. Tema claro: a cena é um desktop de trabalho, de dia,
- * com o README aberto ao lado. Neutros frios + um violeta (o mesmo do
- * portfólio do autor) como única cor de marca; verde, âmbar e vermelho
- * ficam reservados para o estado da validação.
+ * Tokens do editor: laca e folha de ouro. Escolha do usuário (2026-10-14),
+ * a partir da página de decisão de estilo: fundo de laca preta levemente
+ * quente, superfícies em grafite, ouro como a única cor de ação, pátina
+ * (verde-azulado) para "escaneia", laranja para aviso e vermelhão para
+ * bloqueio. Títulos grandes em Alumni Sans finíssima, texto em Albert
+ * Sans, rótulos em mono, maiúsculos e espaçados.
+ *
+ * O QR em si não segue o tema: ele é desenhado nas cores que o usuário
+ * escolheu, como um papel sobre a laca.
  */
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  --bg: #f4f4f6;
-  --surface: #ffffff;
-  --surface-sunken: #f8f8fa;
-  --stage: #ececf1;
-  --border: #e3e3e8;
-  --border-strong: #cfcfd6;
+  /* Laca e grafite */
+  --bg: oklch(7% 0.006 95);
+  --surface: oklch(11% 0.006 95);
+  --surface-sunken: oklch(9% 0.006 95);
+  --surface-raised: oklch(15% 0.008 95);
+  --stage: oklch(7% 0.006 95);
+  --border: oklch(78% 0 0 / 0.14);
+  --border-strong: oklch(78% 0 0 / 0.26);
 
-  --text: #18181b;
-  --text-2: #52525b;
-  --text-3: #71717a;
+  /* Champanhe */
+  --text: oklch(91% 0 0);
+  --text-2: oklch(76% 0 0);
+  --text-3: oklch(62% 0 0);
 
-  --accent: #6d28d9;
-  --accent-hover: #5b21b6;
-  --accent-soft: #f1ebfd;
-  --accent-ring: rgb(109 40 217 / 0.35);
+  /* Folha de ouro */
+  --accent: oklch(84% 0.19 80.46);
+  --accent-hover: oklch(88% 0.16 84);
+  --accent-ink: oklch(14% 0.018 95);
+  --accent-soft: oklch(84% 0.19 80.46 / 0.12);
+  --accent-ring: oklch(84% 0.19 80.46 / 0.4);
+  --accent-muted: oklch(61% 0.085 78);
 
-  --pass: #15803d;
-  --pass-soft: #e8f6ed;
-  --warn: #b45309;
-  --warn-soft: #fdf3e2;
-  --block: #b91c1c;
-  --block-soft: #fdecec;
+  /* Estado da validação */
+  --pass: oklch(74% 0.12 188);
+  --pass-soft: oklch(74% 0.12 188 / 0.1);
+  --pass-line: oklch(74% 0.12 188 / 0.35);
+  --warn: oklch(76% 0.15 55);
+  --warn-soft: oklch(76% 0.15 55 / 0.1);
+  --warn-line: oklch(76% 0.15 55 / 0.4);
+  --block: oklch(68% 0.19 28);
+  --block-soft: oklch(68% 0.19 28 / 0.12);
+  --block-line: oklch(68% 0.19 28 / 0.45);
 
-  --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-data: ui-monospace, 'Cascadia Code', 'SF Mono', Consolas, monospace;
+  --font-ui: 'Albert Sans', 'Avenir Next', 'Helvetica Neue', Arial, system-ui, sans-serif;
+  --font-display: 'Alumni Sans', 'Albert Sans', Arial, sans-serif;
+  --font-data: 'SFMono-Regular', 'Roboto Mono', 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
 
   --text-xs: 0.75rem;
   --text-sm: 0.8125rem;
-  --text-md: 0.875rem;
-  --text-lg: 1rem;
+  --text-md: 0.9375rem;
+  --text-lg: 1.0625rem;
   --text-xl: 1.25rem;
+
+  /* Rótulo: mono, maiúsculo, espaçado */
+  --label-size: 0.625rem;
+  --label-tracking: 0.24em;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -47,12 +67,12 @@
   --space-6: 24px;
   --space-8: 32px;
 
-  --radius-sm: 6px;
-  --radius: 8px;
-  --radius-lg: 12px;
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-lg: 10px;
 
-  --shadow-1: 0 1px 2px rgb(24 24 27 / 0.06), 0 1px 1px rgb(24 24 27 / 0.04);
-  --shadow-2: 0 6px 20px -6px rgb(24 24 27 / 0.16), 0 2px 6px -2px rgb(24 24 27 / 0.08);
+  --shadow-1: 0 1px 2px oklch(0% 0 0 / 0.5);
+  --shadow-2: 0 18px 40px -12px oklch(0% 0 0 / 0.7), 0 2px 6px oklch(0% 0 0 / 0.5);
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }

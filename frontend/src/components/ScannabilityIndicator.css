@@ -8,9 +8,9 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius);
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--surface);
   transition: background 220ms var(--ease-out), border-color 220ms var(--ease-out);
@@ -18,14 +18,18 @@
 
 .verdict__text {
   display: grid;
-  gap: 2px;
+  gap: 0;
   min-width: 0;
 }
 
+/* Título do veredito na voz de exibição do mundo: Alumni Sans, grande e fina. */
 .verdict__text strong {
-  font-size: var(--text-lg);
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-family: var(--font-display);
+  font-size: 2.125rem;
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -0.005em;
+  color: var(--text);
 }
 
 .verdict__text span {
@@ -40,28 +44,32 @@
 }
 
 .verdict__score-value {
-  font-size: 1.75rem;
-  font-weight: 650;
-  letter-spacing: -0.03em;
+  font-family: var(--font-display);
+  font-size: 3.25rem;
+  font-weight: 100;
+  letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
 }
 
 .verdict__score-label {
-  margin-top: 3px;
-  font-size: var(--text-xs);
+  margin-top: 2px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
   color: var(--text-3);
 }
 
 .verdict__checking {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  right: 10px;
   color: var(--text-3);
 }
 
 .verdict--pass {
   background: var(--pass-soft);
-  border-color: #bfe3cb;
+  border-color: var(--pass-line);
 }
 
 .verdict--pass .verdict__icon,
@@ -71,7 +79,7 @@
 
 .verdict--warn {
   background: var(--warn-soft);
-  border-color: #f2d6a8;
+  border-color: var(--warn-line);
 }
 
 .verdict--warn .verdict__icon,
@@ -81,7 +89,7 @@
 
 .verdict--block {
   background: var(--block-soft);
-  border-color: #f3c4c4;
+  border-color: var(--block-line);
 }
 
 .verdict--block .verdict__icon,
@@ -93,6 +101,11 @@
 .verdict--offline {
   grid-template-columns: auto minmax(0, 1fr);
   color: var(--text-2);
+}
+
+.verdict--checking .verdict__text strong,
+.verdict--offline .verdict__text strong {
+  font-size: 1.625rem;
 }
 
 .verdict--offline .verdict__icon {
@@ -111,53 +124,60 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   column-gap: var(--space-3);
-  row-gap: var(--space-1);
-  padding: var(--space-3);
-  border-radius: var(--radius);
+  row-gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
   background: var(--surface);
   border: 1px solid var(--border);
 }
 
+/* Selo no estilo das etiquetas do mundo: mono, maiúsculo, espaçado. */
 .violation__badge {
   align-self: start;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 999px;
+  margin-top: 2px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
   white-space: nowrap;
 }
 
 .violation--blocking .violation__badge {
   color: var(--block);
   background: var(--block-soft);
+  box-shadow: inset 0 0 0 1px var(--block-line);
 }
 
 .violation--warning .violation__badge {
   color: var(--warn);
   background: var(--warn-soft);
+  box-shadow: inset 0 0 0 1px var(--warn-line);
 }
 
 .violation__message {
   margin: 0;
   font-size: var(--text-sm);
-  line-height: 1.5;
+  line-height: 1.55;
   color: var(--text);
 }
 
 .violation__link {
   grid-column: 2;
   justify-self: start;
-  font: inherit;
-  font-size: var(--text-sm);
-  font-weight: 500;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
   color: var(--accent);
   background: none;
   border: 0;
   padding: 0;
   cursor: pointer;
   text-decoration: underline;
-  text-decoration-color: rgb(109 40 217 / 0.35);
-  text-underline-offset: 3px;
+  text-decoration-color: oklch(84% 0.19 80.46 / 0.35);
+  text-underline-offset: 4px;
   border-radius: 3px;
 }
 

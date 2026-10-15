@@ -5,16 +5,22 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Gerador de QR code customizável que valida a legibilidade ao vivo — encoder próprio em Kotlin e a conta real da correção de erro." />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#0a0a08" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600&family=Alumni+Sans:wght@100;300;400&display=swap"
+    />
     <title>mec-qrsafe — editor de QR code</title>
   </head>
   <body>
     <!--
       THESIS: o editor de QR do padrão da categoria (opções | QR | validação e exportar), mas mostrando a conta: a correção de erro bloco a bloco e um raio-X da matriz, em vez de um veredito mágico.
-      OWN-WORLD: neutros frios claros, um violeta como única cor de marca, verde/âmbar/vermelho só para o estado da validação; fonte do sistema e mono só para números; canvas próprio desenhando a matriz.
+      OWN-WORLD: laca preta levemente quente, grafite, ouro (folha de ouro) como única cor de ação, pátina para "escaneia", laranja e vermelhão para aviso e bloqueio; Alumni Sans finíssima nos títulos, Albert Sans no texto, rótulos em mono maiúsculo espaçado; o QR desenhado nas cores do usuário, como papel sobre a laca.
       STORY: o avaliador vê o QR com logo, o nível subir sozinho, passa o mouse nos blocos e entende que a validação é a conta Reed-Solomon de verdade; aumenta o logo até bloquear e vê o exportar travar.
       FIRST VIEWPORT: controles à esquerda (340px), QR grande no centro sobre fundo de palco com o veredito e o botão de baixar logo abaixo, painel "Por dentro do QR" à direita com versão, nível, máscara e as barras por bloco.
-      FORM: padrão da categoria (canon, registro seguro), referência QRCode Monkey / QRCodeChimp / Adobe Express; seed b462cdf7.
+      FORM: layout do padrão da categoria (canon, seed b462cdf7) vestido no mundo laca e ouro, escolhido pelo usuário a partir da página de decisão de estilo (redesign de 2026-10-14).
       FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
     -->
     <div id="root"></div>

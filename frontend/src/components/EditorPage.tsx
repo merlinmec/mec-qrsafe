@@ -86,14 +86,14 @@ export function EditorPage() {
 /** Marca: três cantos de QR, o mesmo desenho dos padrões de localização. */
 function BrandMark() {
   return (
-    <svg className="brand__mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden>
-      <rect width="26" height="26" rx="6" fill="var(--accent)" />
-      <g fill="none" stroke="#fff" strokeWidth="2">
+    <svg className="brand__mark" width="24" height="24" viewBox="0 0 26 26" aria-hidden>
+      <rect width="26" height="26" rx="5" fill="var(--accent)" />
+      <g fill="none" stroke="var(--accent-ink)" strokeWidth="2">
         <rect x="5" y="5" width="6" height="6" rx="1" />
         <rect x="15" y="5" width="6" height="6" rx="1" />
         <rect x="5" y="15" width="6" height="6" rx="1" />
       </g>
-      <rect x="16.5" y="16.5" width="3" height="3" fill="#fff" />
+      <rect x="16.5" y="16.5" width="3" height="3" fill="var(--accent-ink)" />
     </svg>
   )
 }

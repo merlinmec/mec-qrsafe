@@ -2,51 +2,52 @@
 name: mec-qrsafe
 description: Editor de QR code que mostra a conta da correção de erro antes de deixar exportar.
 colors:
-  accent-violet: "#6d28d9"
-  accent-violet-deep: "#5b21b6"
-  accent-violet-wash: "#f1ebfd"
-  page-mist: "#f4f4f6"
-  stage-gray: "#ececf1"
-  surface-white: "#ffffff"
-  surface-sunken: "#f8f8fa"
-  hairline: "#e3e3e8"
-  hairline-strong: "#cfcfd6"
-  ink: "#18181b"
-  ink-secondary: "#52525b"
-  ink-tertiary: "#71717a"
-  verdict-pass: "#15803d"
-  verdict-pass-wash: "#e8f6ed"
-  verdict-warn: "#b45309"
-  verdict-warn-wash: "#fdf3e2"
-  verdict-block: "#b91c1c"
-  verdict-block-wash: "#fdecec"
+  gold-leaf: "oklch(84% 0.19 80.46)"
+  gold-leaf-bright: "oklch(88% 0.16 84)"
+  gold-leaf-deep: "oklch(61% 0.085 78)"
+  dark-ink: "oklch(14% 0.018 95)"
+  lacquer: "oklch(7% 0.006 95)"
+  lacquer-sunken: "oklch(9% 0.006 95)"
+  graphite: "oklch(11% 0.006 95)"
+  graphite-raised: "oklch(15% 0.008 95)"
+  rule: "oklch(78% 0 0 / 0.14)"
+  rule-strong: "oklch(78% 0 0 / 0.26)"
+  champagne: "oklch(91% 0 0)"
+  champagne-muted: "oklch(76% 0 0)"
+  champagne-faint: "oklch(62% 0 0)"
+  patina: "oklch(74% 0.12 188)"
+  ember: "oklch(76% 0.15 55)"
+  vermilion: "oklch(68% 0.19 28)"
 typography:
-  title:
-    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
-    fontSize: "1rem"
-    fontWeight: 600
+  display:
+    fontFamily: "'Alumni Sans', 'Albert Sans', Arial, sans-serif"
+    fontSize: "2.5rem"
+    fontWeight: 100
+    lineHeight: 1
     letterSpacing: "-0.01em"
-  section:
-    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
-    fontSize: "0.875rem"
-    fontWeight: 600
+  headline:
+    fontFamily: "'Alumni Sans', 'Albert Sans', Arial, sans-serif"
+    fontSize: "2.125rem"
+    fontWeight: 300
+    lineHeight: 1.05
+  title:
+    fontFamily: "'Albert Sans', 'Avenir Next', 'Helvetica Neue', Arial, system-ui, sans-serif"
+    fontSize: "0.9375rem"
+    fontWeight: 500
   body:
-    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
-    fontSize: "0.875rem"
+    fontFamily: "'Albert Sans', 'Avenir Next', 'Helvetica Neue', Arial, system-ui, sans-serif"
+    fontSize: "0.9375rem"
     fontWeight: 400
     lineHeight: 1.5
   label:
-    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
-    fontSize: "0.8125rem"
-    fontWeight: 500
-  data:
-    fontFamily: "ui-monospace, 'Cascadia Code', 'SF Mono', Consolas, monospace"
-    fontSize: "0.75rem"
-    fontFeature: "'tnum'"
+    fontFamily: "'SFMono-Regular', 'Roboto Mono', 'JetBrains Mono', Consolas, monospace"
+    fontSize: "0.625rem"
+    fontWeight: 400
+    letterSpacing: "0.24em"
 rounded:
-  sm: "6px"
-  md: "8px"
-  lg: "12px"
+  sm: "4px"
+  md: "6px"
+  lg: "10px"
   pill: "999px"
 spacing:
   "1": "4px"
@@ -58,147 +59,153 @@ spacing:
   "8": "32px"
 components:
   button-primary:
-    backgroundColor: "{colors.accent-violet}"
-    textColor: "{colors.surface-white}"
+    backgroundColor: "{colors.gold-leaf}"
+    textColor: "{colors.dark-ink}"
     rounded: "{rounded.md}"
     padding: "10px 16px"
   button-primary-hover:
-    backgroundColor: "{colors.accent-violet-deep}"
+    backgroundColor: "{colors.gold-leaf-bright}"
   button-secondary:
-    backgroundColor: "{colors.surface-white}"
-    textColor: "{colors.ink}"
+    backgroundColor: "transparent"
+    textColor: "{colors.champagne}"
     rounded: "{rounded.md}"
     padding: "9px 14px"
-  button-ghost:
-    backgroundColor: "transparent"
-    textColor: "{colors.ink-secondary}"
-    rounded: "{rounded.md}"
-    padding: "6px 8px"
   input-text:
-    backgroundColor: "{colors.surface-white}"
-    textColor: "{colors.ink}"
+    backgroundColor: "{colors.lacquer-sunken}"
+    textColor: "{colors.champagne}"
     rounded: "{rounded.md}"
-    padding: "8px 10px"
+    padding: "8px 11px"
   chip:
-    backgroundColor: "{colors.surface-white}"
-    textColor: "{colors.ink-secondary}"
-    rounded: "{rounded.pill}"
-    padding: "5px 10px"
-  chip-selected:
-    backgroundColor: "{colors.accent-violet-wash}"
-    textColor: "{colors.accent-violet}"
+    backgroundColor: "transparent"
+    textColor: "{colors.champagne-muted}"
+    typography: "{typography.label}"
+    rounded: "{rounded.sm}"
+    padding: "5px 9px"
+  segmented-active:
+    backgroundColor: "{colors.graphite-raised}"
+    textColor: "{colors.gold-leaf}"
+    rounded: "{rounded.sm}"
 ---
 
 # Design System: mec-qrsafe
 
 ## Overview
 
-**Creative North Star: "A Bancada de Inspeção"**
+**Creative North Star: "Laca e Folha de Ouro"**
 
-Um editor de QR code do padrão da categoria — opções numa coluna, o QR grande no palco, validação e exportar logo abaixo —, mas com uma bancada de inspeção ao lado: a correção de erro bloco a bloco e um raio-X da matriz. O sistema é sóbrio de propósito para que a única coisa colorida e viva na tela seja o QR e o estado dele. A interface recua; o objeto em inspeção e o veredito sobre ele lideram.
+Uma bancada escura de laca onde o QR é a única coisa clara: um papel nas cores do usuário, posto sobre o fundo preto. O ouro aparece só onde há uma decisão (a ação de baixar, o controle escolhido, os números que importam), e o resto é grafite e champanhe. O mundo veio da página de escolha de estilo que o usuário viu e preferiu ao primeiro visual, claro e violeta, que ele achou "muito IA".
 
-Densidade de ferramenta de trabalho, tema claro (desktop de dia, com o código aberto ao lado). Neutros frios, uma cor de marca e três cores de estado, nada além disso. O visual escolhido pelo usuário é o padrão da categoria (régua: QRCode Monkey, QRCodeChimp, Adobe Express); o diferencial vive no conteúdo, não numa estética fora do comum.
+A tipografia faz o trabalho de identidade: títulos em Alumni Sans finíssima e alta, texto em Albert Sans, e rótulos em mono maiúsculo e espaçado, como as etiquetas de um instrumento. O layout é o do padrão da categoria (controles | QR | inspeção); o caráter está nos materiais, não na composição.
 
 **Key Characteristics:**
-- Três zonas fixas no desktop: controles (340px), palco do QR, inspeção (340px).
-- O QR é desenhado num canvas próprio, em pixels inteiros por módulo, sobre um palco cinza.
-- Estado da validação dito em texto e cor ao mesmo tempo, nunca só por cor.
-- Números sempre com algarismos tabulares.
+- Fundo de laca, superfícies em grafite, filetes finos de champanhe translúcido.
+- Ouro é a única cor de ação; pátina, laranja e vermelhão são só do veredito.
+- Alumni Sans 100–300 em tamanho de exibição; mono maiúsculo espaçado em todo rótulo.
+- O QR nunca segue o tema: é desenhado nas cores do usuário, como papel sobre a laca.
 
 ## Colors
 
-Neutros frios com um violeta de marca; verde, âmbar e vermelho são do veredito e de mais nada.
+Laca quase preta com um toque quente, grafite, champanhe e um único metal.
 
 ### Primary
-- **Violeta mec** ({colors.accent-violet}): ação principal (Baixar), controles ativos (preenchimento do slider, chip selecionado), foco e links. O mesmo violeta do portfólio do autor. `accent-violet-deep` no hover; `accent-violet-wash` como fundo de seleção.
+- **Folha de ouro** ({colors.gold-leaf}): botão de baixar (fundo, com tinta escura), opção ativa do segmentado (texto e filete), preenchimento do slider, chave ligada, números do painel "Por dentro do QR", foco e seleção de texto. `gold-leaf-bright` no hover; `gold-leaf-deep` translúcido no botão desabilitado.
 
 ### Neutral
-- **Névoa** ({colors.page-mist}): fundo da página.
-- **Cinza de palco** ({colors.stage-gray}): o fundo atrás do QR — separa o objeto em inspeção das colunas brancas.
-- **Branco de superfície** ({colors.surface-white}) e **branco rebaixado** ({colors.surface-sunken}): colunas, campos, trilhos de segmentado e de barra.
-- **Fio** ({colors.hairline}) e **fio forte** ({colors.hairline-strong}): divisórias de seção e bordas de campo.
-- **Tinta**, **tinta secundária**, **tinta terciária** ({colors.ink}, {colors.ink-secondary}, {colors.ink-tertiary}): texto, rótulos, dicas.
+- **Laca** ({colors.lacquer}): fundo da página e do palco do QR.
+- **Grafite** ({colors.graphite}) e **grafite elevado** ({colors.graphite-raised}): colunas de controles e de inspeção, opção ativa, dica sobre o canvas.
+- **Laca rebaixada** ({colors.lacquer-sunken}): campos e trilhos.
+- **Filete** ({colors.rule}) e **filete forte** ({colors.rule-strong}): divisórias, bordas de campo e de etiqueta.
+- **Champanhe** ({colors.champagne}), **champanhe apagado** e **champanhe fraco**: texto, texto secundário, rótulos e dicas.
+- **Tinta escura** ({colors.dark-ink}): texto sobre o ouro.
+
+### Estado
+- **Pátina** ({colors.patina}): escaneia; barras de bloco com folga.
+- **Brasa** ({colors.ember}): aviso; bloco perto do limite.
+- **Vermelhão** ({colors.vermilion}): bloqueio; bloco que estourou.
 
 ### Named Rules
-**The Verdict Owns Color Rule.** Verde ({colors.verdict-pass}), âmbar ({colors.verdict-warn}) e vermelho ({colors.verdict-block}) só aparecem para dizer se o QR escaneia: o painel do veredito, os selos das violações e as barras dos blocos. Nenhum outro elemento usa essas cores.
+**The One Metal Rule.** O ouro é a única cor de ação e de escolha. Estado nunca usa ouro (por isso aviso é brasa, não âmbar dourado).
 
-**The Red Is Damage Rule.** No raio-X, vermelho significa codeword destruído pelo logo. As cores dos blocos ficam no arco de 30° a 330° de matiz para nunca colidir com ele.
+**The Paper On Lacquer Rule.** O QR é desenhado nas cores que o usuário escolheu, sobre o próprio fundo claro dele; o tema escuro nunca tinge o QR.
+
+**The Red Is Damage Rule.** No raio-X, vermelho significa codeword destruído pelo logo; as cores dos blocos ficam entre 30° e 330° de matiz.
 
 ## Typography
 
-**Body Font:** fonte do sistema (system-ui, com -apple-system, Segoe UI, Roboto)
-**Data Font:** ui-monospace (com Cascadia Code, SF Mono, Consolas)
+**Display Font:** Alumni Sans (com Albert Sans de reserva)
+**Body Font:** Albert Sans (com Avenir Next, Helvetica Neue)
+**Label Font:** SFMono-Regular / Roboto Mono / JetBrains Mono
 
-**Character:** a fonte do sistema mantém a ferramenta familiar e sem ruído; a monoespaçada aparece só onde o conteúdo é código ou contagem.
+**Character:** a Alumni Sans finíssima dá a voz de exibição — alta, leve, de letreiro; a Albert Sans mantém o texto legível; a mono maiúscula espaçada etiqueta tudo, como um instrumento.
 
 ### Hierarchy
-- **Title** (600, 1rem, -0.01em): nome do produto, título "Por dentro do QR", título do veredito.
-- **Section** (600, 0.875rem): títulos das seções do painel.
-- **Body** (400, 0.875rem, 1.5): texto corrido e mensagens das violações.
-- **Label** (500, 0.8125rem): rótulos de campo e valores de controle, com algarismos tabulares.
-- **Data** (mono, 0.75rem, tnum): conteúdo do QR, hex das cores, contagens de codeword (4/13).
+- **Display** (Alumni Sans 100, 2.5rem, 1): "Por dentro do QR" e a nota do veredito (3.25rem).
+- **Headline** (Alumni Sans 300, 2.125rem, 1.05): título do veredito ("Escaneia", "Não escaneia").
+- **Title** (Albert Sans 500, 0.9375rem): títulos das seções do painel e dos blocos.
+- **Body** (Albert Sans 400, 0.9375rem, 1.5): texto corrido e mensagens das violações.
+- **Label** (mono 400, 0.625rem, 0.24em, maiúsculo): rótulos de campo, chaves da lista de inspeção, selos, etiquetas de exemplo, links de ação ("Ajustar em Logo"), nome no cabeçalho.
 
 ### Named Rules
-**The Mono Means Data Rule.** Monoespaçada só para código e contagem (conteúdo, hex, "6/13"). Valores de controle como "20% da largura" usam a fonte da interface com algarismos tabulares.
+**The Labels Are Instruments Rule.** Todo rótulo é mono, maiúsculo e espaçado; nunca um rótulo em Albert Sans negrito.
+
+**The Thin Voice Rule.** Alumni Sans só em tamanho de exibição (≥ 2rem) e em peso 100–300; abaixo disso, Albert Sans.
 
 ## Layout
 
-Grade de três colunas no desktop largo: controles 340px | palco flexível | inspeção 340px; as colunas laterais são fixas (sticky) abaixo do cabeçalho de 56px e rolam por dentro. Abaixo de 1240px a inspeção desce para baixo do palco; abaixo de 820px tudo empilha com o QR primeiro. O palco limita o QR e a coluna de validação a 520px. Ritmo de espaçamento em passos de 4px (4, 8, 12, 16, 20, 24, 32); seções do painel com 20px de lado e 24px embaixo, separadas por fio.
+Grade de três colunas no desktop largo: controles 340px | palco flexível | inspeção 340px, com as laterais fixas abaixo do cabeçalho de 56px e rolando por dentro. Abaixo de 1240px a inspeção desce para baixo do palco; abaixo de 820px tudo empilha com o QR primeiro. O palco limita o QR e a coluna de validação a 520px. Espaçamento em passos de 4px; seções do painel com 20px de lado e 24px embaixo, separadas por filete.
 
 ## Elevation & Depth
 
-Plano por padrão, profundidade por tons (palco cinza contra colunas brancas). Sombra só em dois lugares: o QR no palco, que é o objeto em inspeção, e os controles flutuantes (polegar do slider, opção ativa do segmentado, dica sobre o canvas).
+Profundidade por tom: laca (fundo) < laca rebaixada (campos) < grafite (colunas) < grafite elevado (ativo). Sombra só no QR sobre o palco, que é o objeto, e na dica sobre o canvas — sombras escuras e difusas, que só se notam como peso.
 
 ### Shadow Vocabulary
-- **Repouso** (`0 1px 2px rgb(24 24 27 / 0.06), 0 1px 1px rgb(24 24 27 / 0.04)`): opção ativa do segmentado, polegar do slider, avisos sobre o canvas.
-- **Objeto** (`0 6px 20px -6px rgb(24 24 27 / 0.16), 0 2px 6px -2px rgb(24 24 27 / 0.08)`): o canvas do QR e a dica de módulo.
+- **Objeto** (`0 18px 40px -12px oklch(0% 0 0 / 0.7), 0 2px 6px oklch(0% 0 0 / 0.5)`): o QR e a dica de módulo.
 
 ## Shapes
 
-Cantos suaves e consistentes: 6px em peças pequenas (miniatura do logo, dica), 8px em campos, botões e no próprio QR, 999px em chips, selos e barras. Bordas de 1px; nada de faixa colorida lateral.
+Cantos discretos: 4px em etiquetas, selos e opções do segmentado; 6px em campos e botões; 10px no veredito e nas violações; 999px só em chaves e barras. Filetes de 1px; o ativo ganha um filete de ouro por dentro (inset), nunca uma borda grossa.
 
 ## Components
 
 ### Buttons
-- **Shape:** cantos de 8px.
-- **Primary:** violeta com texto branco, 10px 16px; só para Baixar.
-- **Hover / Focus:** escurece para o violeta profundo; foco é um anel de 3px em violeta translúcido; pressionar desce 1px.
-- **Secondary / Ghost:** secundário branco com fio forte; fantasma sem borda, tinta secundária, para ações de seção (Inverter, Remover, Centralizar).
-- **Disabled:** primário vira lilás apagado e sempre vem com o motivo escrito abaixo (aria-describedby).
+- **Primary:** folha de ouro com tinta escura, 6px; só para baixar.
+- **Hover:** ouro mais claro. **Disabled:** ouro escuro translúcido, texto em ouro apagado, e sempre o motivo escrito abaixo.
+- **Secondary:** transparente com filete forte; hover em grafite elevado.
+- **Ghost:** sem borda, champanhe apagado; hover com o texto em ouro (Inverter, Remover, Centralizar).
 
 ### Chips
-- **Style:** pílula branca com fio, texto secundário.
-- **State:** selecionado ganha borda e texto violeta sobre o lavado violeta.
+- **Style:** etiqueta mono maiúscula com filete forte, fundo transparente.
+- **State:** selecionada com borda e texto em ouro sobre ouro translúcido.
 
 ### Inputs / Fields
-- **Style:** branco, fio forte, 8px; textarea de conteúdo em mono.
-- **Focus:** borda violeta + anel de 3px.
-- **Error:** borda vermelha (`aria-invalid`).
-- **Slider:** trilho de 4px, preenchimento violeta, polegar branco com aro violeta.
-- **Segmented:** rádios nativos num trilho rebaixado; a opção ativa vira uma peça branca com sombra de repouso.
+- **Style:** laca rebaixada, filete forte, 6px; hex e conteúdo em mono.
+- **Focus:** borda de ouro + anel de ouro translúcido.
+- **Slider:** trilho de 3px, preenchimento em ouro, polegar de ouro com aro de laca.
+- **Segmented:** trilho rebaixado; a opção ativa vira grafite elevado com texto e filete de ouro.
+- **Toggle:** trilho de grafite; ligado vira ouro com o polegar em tinta escura.
 
 ### Navigation
-Cabeçalho de 56px, branco translúcido com desfoque, marca à esquerda (selo violeta com três "olhos" de QR), frase do produto e link para o GitHub à direita. No celular a frase some.
+Cabeçalho de 56px em laca translúcida: selo de ouro com três olhos de QR, "MEC-QRSAFE" em mono de ouro espaçado, frase do produto em champanhe fraco, link do GitHub que acende em ouro.
 
 ### Veredito
-Painel com ícone, título ("Escaneia", "Escaneia, com ressalvas", "Não escaneia"), frase de consequência e nota de 0 a 100, sobre o lavado da cor do estado. As violações vêm abaixo em lista, cada uma com selo (Bloqueia/Aviso), a mensagem do servidor e um link "Ajustar em <seção>" que rola e pisca a seção certa.
+Painel de 10px sobre o lavado da cor do estado, com filete da mesma cor: ícone, título em Alumni Sans 300, frase de consequência e a nota em Alumni Sans 100 com o rótulo "DE 100" em mono. As violações vêm abaixo, cada uma com o selo mono (BLOQUEIA / AVISO), a mensagem do servidor e o link "AJUSTAR EM <SEÇÃO>" em ouro.
 
 ### Barras dos blocos
-Uma linha por bloco Reed-Solomon: amostra da cor do bloco, nome, barra (verde até 75% da correção, âmbar até 100%, vermelho acima) com um traço no limiar de 75%, e a contagem em mono. Passar o mouse ou focar uma linha acende os codewords daquele bloco no QR. A barra cresce por `scaleX`, nunca por largura.
+Uma linha por bloco Reed-Solomon: amostra da cor do bloco, nome, barra (pátina, brasa acima de 75% da correção, vermelhão acima de 100%) com um traço no limiar e a contagem em mono. Passar o mouse acende os codewords do bloco no QR. A barra cresce por `scaleX`.
 
 ### Raio-X
-Modo do palco: "estrutura" pinta os padrões fixos (finder violeta, timing verde-azulado, alinhamento azul, formato âmbar, versão laranja, módulo escuro rosa); "blocos" pinta cada módulo de dado na cor do seu bloco e os destruídos em vermelho. No raio-X a placa do logo vira um contorno tracejado, para mostrar o que está embaixo.
+Modo do palco: "estrutura" pinta os padrões fixos; "blocos" pinta cada módulo de dado na cor do seu bloco e os destruídos em vermelho. A placa do logo vira contorno tracejado.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** desenhar o logo sempre sobre uma placa na cor clara do QR — é o caso que a validação modela.
-- **Do** dizer o estado em texto além da cor (título do veredito, selo da violação, aria-label das barras).
-- **Do** manter o QR em pixels inteiros por módulo (sem borda borrada).
-- **Do** usar algarismos tabulares em todo número que muda.
+- **Do** usar o ouro só para ação e escolha.
+- **Do** etiquetar com mono maiúsculo espaçado (0.625rem, 0.24em).
+- **Do** manter o QR nas cores do usuário, sobre o fundo claro dele.
+- **Do** dizer o estado em texto além da cor.
 
 ### Don't:
-- **Don't** usar verde, âmbar ou vermelho fora do veredito e das barras.
-- **Don't** usar vermelho como cor de bloco no raio-X.
-- **Don't** montar grade de "número grande com rótulo pequeno" para os dados técnicos; a inspeção é uma lista de chave e valor.
+- **Don't** voltar a um tema claro genérico; o usuário rejeitou esse visual.
+- **Don't** usar ouro para estado nem pátina/brasa/vermelhão fora do veredito e das barras.
+- **Don't** usar Alumni Sans abaixo de 2rem.
 - **Don't** oferecer uma forma de módulo ou de canto que não esteja no teste contra o leitor do backend (ShapesAgainstReaderTest).
