@@ -10,9 +10,11 @@ nada (gera → valida → exporta), então não há dado de visitante para isola
   `classpath:/static` do `qr-api`; a API serve o editor na raiz e a API em `/api/v1/...`. Na
   hospedagem gratuita, dois serviços seriam dois servidores dormindo e acordando.
 - **Limite por IP** (`RateLimitFilter`): 120 requisições por minuto na API e 10 exportações por
-  minuto. Desligado fora da demo; o `render.yaml` liga. O IP vem do `X-Forwarded-For` do proxy do
-  Render (`server.forward-headers-strategy=native`): o Tomcat usa o último endereço não confiável da
-  lista, então um cabeçalho inventado pelo visitante não renova a cota.
+  minuto. Desligado fora da demo; o `render.yaml` liga. O IP vem do `CF-Connecting-IP`: o Render
+  fica atrás da Cloudflare, que põe ali o IP real e sobrescreve o que o visitante mandar. A
+  primeira versão usava o `X-Forwarded-For` resolvido pelo Tomcat, que funcionou no Docker local
+  mas não no Render — o último endereço da lista é o do servidor da Cloudflare, que muda a cada
+  requisição, e 16 exports seguidos passaram sem nenhum 429.
 - **Memória**: no máximo 2 exportações ao mesmo tempo (um PNG de 4096 px ocupa ~64 MB enquanto é
   desenhado); a terceira espera até 10 s e, se não houver vaga, recebe 503. Corpo da requisição
   limitado a 2 MB.

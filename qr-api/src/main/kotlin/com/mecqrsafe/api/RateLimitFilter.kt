@@ -23,17 +23,34 @@ import java.util.concurrent.ConcurrentHashMap
  * então o teto geral precisa ser folgado; quem passa dele recebe 429 com
  * Retry-After.
  *
- * O IP é o `remoteAddr`: na demo, `server.forward-headers-strategy=native`
- * faz o Tomcat trocar pelo do cliente a partir do X-Forwarded-For do
- * proxy confiável, ignorando o que o próprio cliente inventar no cabeçalho.
+ * De onde vem o IP: se [clientIpHeader] estiver configurado e presente, é
+ * ele; senão, o `remoteAddr`. No Render, que fica atrás da Cloudflare, o
+ * `remoteAddr` não serve: o X-Forwarded-For chega como "visitante,
+ * servidor-da-Cloudflare", o Tomcat fica com o último endereço público e
+ * esse servidor muda a cada requisição — na primeira versão, 16 exports
+ * seguidos passaram sem nenhum 429. A Cloudflare manda o IP real em
+ * `CF-Connecting-IP` e sobrescreve o que o visitante puser nesse
+ * cabeçalho, então é ele que o render.yaml configura. Fora de um proxy
+ * que garanta isso, o cabeçalho NÃO deve ser configurado: qualquer um
+ * poderia inventar um IP por requisição.
  */
 @Component
 @Order(1) // primeiro: quem já passou do teto nem chega às outras checagens
 class RateLimitFilter(
     @param:Value("\${mecqrsafe.rate-limit.requests-per-minute:0}") private val requestsPerMinute: Int,
     @param:Value("\${mecqrsafe.rate-limit.exports-per-minute:0}") private val exportsPerMinute: Int,
+    @param:Value("\${mecqrsafe.rate-limit.client-ip-header:}") private val clientIpHeader: String = "",
     private val clock: Clock = Clock.systemUTC(),
 ) : OncePerRequestFilter() {
+
+    /** O IP do visitante segundo a configuração (ver o comentário da classe). */
+    fun clientIp(request: HttpServletRequest): String =
+        clientIpHeader.takeIf { it.isNotBlank() }
+            ?.let { request.getHeader(it) }
+            ?.substringBefore(',')
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?: request.remoteAddr
 
     private class Window(val minute: Long) {
         var requests = 0
@@ -50,7 +67,7 @@ class RateLimitFilter(
         val isExport = request.requestURI.endsWith("/export")
         val allowed = synchronized(this) {
             if (windows.size > MAX_TRACKED_IPS) windows.values.removeIf { it.minute != minute }
-            val window = windows.compute(request.remoteAddr) { _, current ->
+            val window = windows.compute(clientIp(request)) { _, current ->
                 if (current == null || current.minute != minute) Window(minute) else current
             }!!
             window.requests++
