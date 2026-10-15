@@ -62,8 +62,9 @@
   padding: 7px 9px;
   min-width: max-content;
   border-radius: var(--radius-sm);
-  background: rgb(24 24 27 / 0.92);
-  color: #f4f4f5;
+  background: oklch(15% 0.008 95 / 0.96);
+  border: 1px solid var(--border-strong);
+  color: var(--text-2);
   font-size: var(--text-xs);
   line-height: 1.35;
   font-variant-numeric: tabular-nums;
@@ -76,8 +77,11 @@
 }
 
 .stage__tooltip-title {
-  font-weight: 600;
-  color: #fff;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--accent);
 }
 
 .stage__placeholder {
@@ -124,7 +128,7 @@
   font-size: var(--text-xs);
   font-weight: 500;
   color: var(--text-2);
-  background: rgb(255 255 255 / 0.94);
+  background: oklch(11% 0.006 95 / 0.94);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-1);
 }
@@ -135,7 +139,7 @@
   right: 50%;
   transform: translate(50%, 100%);
   color: var(--block);
-  border-color: #f3c4c4;
+  border-color: var(--block-line);
   background: var(--block-soft);
   white-space: nowrap;
 }
