@@ -384,6 +384,8 @@ para ele                         |                                    | DYNAMIC)
   testes reais de câmera (celulares diferentes, condições de luz
   diferentes) assim que houver uma versão navegável — os números usados
   no v1 são ponto de partida razoável, não verdade absoluta.
+  [Rodada 1 feita em 2026-10-15, ver seção 21 e docs/CALIBRACAO.md;
+  faltam papel impresso e iPhone.]
 - Se a fase 2 trouxer conta de usuário/multiusuário, revisitar a decisão
   de estado local (Context + useReducer) — pode fazer sentido introduzir
   uma lib de estado global nesse ponto, não antes.
@@ -727,3 +729,24 @@ DOIS servidores dormindo, e site estático não dorme.
 Custo aceito: a primeira validação ainda espera a API acordar. O que muda
 é o que a pessoa vê nesse minuto: o editor pronto para mexer, com o motivo
 da espera escrito, em vez de uma tela em branco.
+
+
+21. CALIBRAÇÃO DO CONTRASTE COM CÂMERA REAL — RODADA 1 (2026-10-15)
+---------------------------------------------------------------------
+Ferramenta: docs/calibracao/index.html, página autocontida com 46 QRs
+(5 tons x 8 contrastes de 1,5 a 6:1, 5 invertidos e um controle), um por
+vez e em ordem aleatória, com resposta rápido / lento / não leu. Cada QR
+tem uma URL própria para o celular mostrar qual cartão leu. As cores são
+calculadas pela mesma fórmula da ContrastRule.
+
+Rodada 1 (Galaxy A14, ambiente escuro, lendo da tela): nenhuma falha em
+46, nem a 1,5:1; 7 dos 9 "lentos" em 2,5:1 ou abaixo. Tabela e dados
+brutos em docs/CALIBRACAO.md.
+
+Decisão: o limite FICA em 4,5:1. Tela num quarto escuro é o cenário mais
+fácil (a tela emite luz, a câmera ajusta a exposição), e mesmo nele a
+leitura hesita perto de 2,5:1 — o 4,5:1 deixa quase o dobro de margem.
+Afrouxar a partir desse cenário seria calibrar pelo caso que menos
+importa; o QR de verdade vai impresso. O dado que poderia mudar a regra
+é o de papel com luz ambiente, e o de iPhone para os invertidos (o A14
+leu todos; a regra trata invertido igual ao normal).

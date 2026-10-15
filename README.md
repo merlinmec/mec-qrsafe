@@ -49,7 +49,7 @@ npm run dev                           # editor em localhost:5173 (o /api vai pra
 npm test                              # testes do front (Vitest)
 ```
 
-## Status (2026-10-14)
+## Status: v1.0 (2026-10-15)
 
 **Encoder completo**, do zero, sem lib pronta: byte mode (UTF-8), as 40
 versões nos 4 níveis de correção, Reed-Solomon com intercalação de
@@ -77,6 +77,14 @@ quantos aquele bloco corrige. No modo AUTO, a correção sobe sozinha (M →
 Q → H) até o logo caber. Conferido contra o leitor do ZXing: a regra de
 área bloqueia exatamente quando o decodificador falha, e tudo que as
 regras aprovam é lido da imagem.
+
+**Conferido com câmera de verdade**: uma página de teste
+([`docs/calibracao/`](docs/calibracao/index.html)) mostra 46 QRs em ordem
+aleatória, de 1,5:1 a 21:1 e em cinco tons, e registra o que o celular lê.
+Na primeira rodada (Galaxy A14, lendo da tela) a câmera começou a hesitar
+perto de 2,5:1; o limite de 4,5:1 ficou, com quase o dobro de margem sobre
+esse ponto no cenário mais favorável. Resultados e próximos passos em
+[`docs/CALIBRACAO.md`](docs/CALIBRACAO.md).
 
 ### API
 
