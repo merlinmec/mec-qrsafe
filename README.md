@@ -13,6 +13,8 @@ hora; a API roda num servidor gratuito que dorme e, se estiver parada, leva
 cerca de um minuto pra acordar — o editor avisa e começa a validar sozinho.
 Como funciona em [`docs/DEMO.md`](docs/DEMO.md)).
 
+![O editor em uso: módulos em pontos, cantos em círculo e degradê validados a cada mudança; um logo grande demais derruba o QR para "Não escaneia" e bloqueia a exportação, e ao diminuir volta a 100; no fim, o Raio-X por blocos](docs/editor.gif)
+
 ![Editor do mec-qrsafe com um QR em pontos, cantos em círculo e degradê, validado ao vivo](docs/estilos.png)
 
 ![Raio-X por bloco: os codewords do bloco 2 acesos e, em vermelho, os que o logo destrói; ao lado, a correção de erro bloco a bloco](docs/editor.png)
